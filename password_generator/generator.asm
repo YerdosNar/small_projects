@@ -1,6 +1,6 @@
 section .data
     fmt_char db "%c", 0
-    newline db  10, 0
+    newline  db 10, 0
 
 section .text
     global main
@@ -65,17 +65,17 @@ generate_lowercase:
 print_char:
     ; printf("%c", c)
     mov rdi, fmt_char ; first arg: "%c"
-    mov rsi, rdx    ; second argc: the char `c`
+    mov rsi, rdx      ; second argc: the char `c`
     xor rax, rax    ; RAX = 0
     call printf
 
-    jnc rbx         ; i++ Jump if Not Carry
+    inc rbx         ; i++
     jmp loop_start  ; repeat loop
 
 loop_end:
     ; printf("\n")
     mov rdi, fmt_char
-    mov rsi, newline
+    mov rsi, 10
     xor rax, rax
     call printf
 

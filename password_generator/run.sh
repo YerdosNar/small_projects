@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
 
-gcc -o gen generate.c -Wall -Wextra
+if [ "$1" == "asm" ];then
+    nasm generator.asm -f elf64 -o generator.o
+    gcc -o generator generator.o -no-pie
+    ./generator
+    rm generator generator.o
+else
+    gcc -o generator generator.c -Wall -Wextra
+    ./generator "$@"
+    rm generator
+fi
 
-./gen "$@"
