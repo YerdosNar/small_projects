@@ -74,6 +74,10 @@ int main() {
             }
 
             pid_t pid1 = fork();
+            if(pid1 == -1) {
+                perror("pid1 fork failed");
+                exit(1);
+            }
             if(pid1 == 0) {
                 close(fd[0]);
                 dup2(fd[1], STDOUT_FILENO);
@@ -85,9 +89,13 @@ int main() {
             }
 
             pid_t pid2 = fork();
+            if(pid2 == -1) {
+                perror("pid2 fork failed");
+                exit(1);
+            }
             if(pid2 == 0) {
                 close(fd[1]);
-                dup2(fd[0], STDOUT_FILENO);
+                dup2(fd[0], STDIN_FILENO);
                 close(fd[0]);
 
                 execvp(cmd2[0], cmd2);
