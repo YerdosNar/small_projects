@@ -22,7 +22,7 @@ int main(int argc, char **argv) {
                     return 1;
                 }
             }
-            if(!strncmp("-f", argv[i], 2) || !strncmp("--first-name", argv[i], 12)) {
+            else if(!strncmp("-f", argv[i], 2) || !strncmp("--first-name", argv[i], 12)) {
                 if(i+1 < argc) {
                     strncpy(name, argv[i+1], 63);
                     i += 2;
@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
                     printf("count set to %d\n", count);
                     printf("i is: %d\n", i);
                 } else {
-                    fprintf(stderr, "ERROR: %s requires number.\n", argv[i]);
+                    fprintf(stderr, "ERROR: %s requires a name.\n", argv[i]);
                     return 1;
                 }
             }
@@ -41,36 +41,34 @@ int main(int argc, char **argv) {
     printf("Name: %s\nLength: %d\n", name, name_length);
     srand(time(NULL));
     char password[count];
-    for(int i = 0; i < count - name_length - 1; i++) {
-        printf("i = %d, generated = ", i);
-        int choose = rand() % 3;
+    int choose = rand() % 2;
+    if(choose) {
+        password[0] = rand() % 26 + 65;
+    } else {
+        password[0] = rand() % 26 + 97;
+    }
+    for(int i = 1; i < count - name_length - 1; i++) {
+        choose = rand() % 3;
         if(choose == 0) {
             password[i] = rand() % 10 + 48;
-            printf("%c\n", password[i]);
         } else if(choose == 1) {
             password[i] = rand() % 26 + 65;
-            printf("%c\n", password[i]);
         } else if(choose == 2) {
             password[i] = rand() % 26 + 97;
-            printf("%c\n", password[i]);
         }
     }
     for(int i = 0; i < name_length; i++) {
         int change_case = rand() % 2;
-        printf("i = %d, generated = ", i);
         if(change_case) {
             if(name[i] >= 97 && name[i] <= 122) {
                 password[i + count - name_length - 1] = name[i] - 32;
-                printf("%c\n", password[i + count - name_length - 1]);
             } else if(name[i] >= 65 && name[i] <= 90) {
                 password[i + count - name_length - 1] = name[i] + 32;
-                printf("%c\n", password[i + count - name_length - 1]);
             } else {
                 fprintf(stderr, "ERROR: Not supported character: %c\n", name[i]);
             }
         } else {
             password[i + count - name_length - 1] = name[i];
-            printf("%c\n", password[i + count - name_length - 1]);
         }
     }
     password[count-1] = '\0';
