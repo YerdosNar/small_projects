@@ -25,15 +25,25 @@ main:
     xor rbx, rbx    ; this is how we get zero
 
 loop_start:
-    cmp rbx,10      ; comapring i to 10
+    cmp rbx,20      ; comapring i to 10
     jge loop_end    ; jge(jump grater or equal) i>=10
 
-    ; generate either uppercase or lowercase
-    ; if RAX's last bit 1, then uppercase
-    ; else lowercase
+    ; Generate type: 0=lower, 1=upper, 2=generate_number
     call rand       ; return random int in RAX
-    test rax, 1
-    jz generate_lowercase
+    xor rdx, rdx    ; RDX = 0
+    mov rcx, 3      ; divide to 3
+    div rcx         ; remainder in RDX
+
+    ; if 0 -> generate_lowercase
+    cmp rdx, 0      ; compare with 0
+    je generate_lowercase ;
+
+    ; if 1 -> generate_uppercase
+    cmp rdx, 1
+    je generate_uppercase ;
+
+    ; else -> generate_number
+    jmp generate_number
 
 generate_uppercase:
     ; char c = rand() % 26 + 65
@@ -53,14 +63,14 @@ generate_lowercase:
     add rdx, 97     ; add 97 to go to uppercase letters
     jmp print_char
 
-; generate_number:
-;     ; char c = rand() % 10 + 47
-;     call rand       ; RAX rand number
-;     xor rdx, rdx
-;     mov rcx, 10
-;     div rcx
-;     add rdx, 47
-;     jmp print_char
+generate_number:
+    ; char c = rand() % 10 + 48
+    call rand       ; RAX rand number
+    xor rdx, rdx
+    mov rcx, 10
+    div rcx
+    add rdx, 48
+    jmp print_char
 
 print_char:
     ; printf("%c", c)
