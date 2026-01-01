@@ -19,10 +19,19 @@ main:
     mov rdi, rax    ; move time result to first arg RDI
     call srand      ; Call srand
 
+; To prevent
+; First char != number
+first_iteration:
+    call rand
+    test rax, 1
+    jz generate_uppercase
+    jmp generate_lowercase
+
     ; loop counter init (i = 0)
     ; using RBX, `callee-saved`
     ; funcs like `printf`, `rand` cannot chage RBX
     xor rbx, rbx    ; this is how we get zero
+
 
 loop_start:
     cmp rbx,20      ; comapring i to 10
@@ -44,6 +53,7 @@ loop_start:
 
     ; else -> generate_number
     jmp generate_number
+
 
 generate_uppercase:
     ; char c = rand() % 26 + 65
