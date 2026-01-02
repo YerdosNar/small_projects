@@ -14,31 +14,57 @@ section .text
     extern atoi
 
 main:
-    push    rbp     ; save base pointer
-    mov     rbp, rsp; setup stack frame
+    push    rbp                 ; save base pointer
+    mov     rbp, rsp            ; setup stack frame
 
+    mov     r12, 20             ; default length is 20
+
+                                ; Check if there are args
+    cmp     rdi, 3              ; are there 3 args?
+    jl      start_setup         ; if not, skip to defaults
+
+    mov     rbx, rsi		; Save argv pointer to RBX
+
+                                ; is it "-l"
+    mov     rdi, [rbx+8]        ; argv[1] is at offset 8
+    mov     rsi, flag_short     ; compare with "-l"
+    call    strcmp
+    test    eax, eax
+    jz      parse_value         ; jump if matched
+
+    mov     rdi, [rbx+8]        ; is it "--length"
+    mov     rsi, flag_long      ; compare with "--length"
+    call    strcmp
+    test    eax, eax
+    jnz     start_setup
+
+parse_value:
+    mov     rdi, [rbx+16]
+    call    atoi
+    mov     r12, rax		; Store user length in R12
+
+start_setup:
     ; srand(time(NULL)
-    mov     rdi, 0  ; arg for time(): NULL
-    call time       ; return `time` in RAX
-    mov rdi, rax    ; move time result to first arg RDI
-    call srand      ; Call srand
-
-; To prevent
-; First char != number
-first_iteration:
-    call rand
-    test rax, 1
-    jz generate_uppercase
-    jmp generate_lowercase
+    mov     rdi, 0              ; arg for time(): NULL
+    call    time                ; return `time` in RAX
+    mov     rdi, rax            ; move time result to first arg RDI
+    call    srand               ; Call srand
 
     ; loop counter init (i = 0)
     ; using RBX, `callee-saved`
     ; funcs like `printf`, `rand` cannot chage RBX
-    xor rbx, rbx    ; this is how we get zero
+    xor     rbx, rbx    ; this is how we get zero
 
+; To prevent
+; First char != number
+first_iteration:
+    call    rand
+    test    rax, 1
+    jz      generate_uppercase
+    jmp     generate_lowercase
 
 loop_start:
-    cmp rbx,20      ; comapring i to 10
+    cmp	    rbx, r12; comapring i to 10
     jge loop_end    ; jge(jump grater or equal) i>=10
 
     ; Generate type: 0=lower, 1=upper, 2=generate_number
