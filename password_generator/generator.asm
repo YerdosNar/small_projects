@@ -1,6 +1,8 @@
 section .data
-    fmt_char db "%c", 0
-    newline  db 10, 0
+    fmt_char    db "%c",        0
+    newline     db 10,          0
+    flag_short  db "-l",        0
+    flag_long   db "--length",  0
 
 section .text
     global main
@@ -8,6 +10,8 @@ section .text
     extern rand
     extern srand
     extern time
+    extern strcmp
+    extern atoi
 
 main:
     push    rbp     ; save base pointer
