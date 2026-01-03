@@ -1,9 +1,10 @@
 section .data
     fmt_char    db "%c",        0
+    fmt_str     db "%s",        0
     newline     db 10,          0
     flag_short  db "-l",        0
     flag_long   db "--length",  0
-    generating  db "Generating" 0
+    generated   db "Generated: ", 0
 
 section .text
     global  main
@@ -17,10 +18,6 @@ section .text
 main:
     push    rbp                 ; save base pointer
     mov     rbp, rsp            ; setup stack frame
-
-    mov     rdi, generating
-    mov     rsi, 10
-    call    printf
 
     mov     r12, 20             ; default length is 20
 
@@ -49,6 +46,11 @@ parse_value:
     mov     r12, rax		; Store user length in R12
 
 start_setup:
+    mov     rdi, fmt_str
+    mov     rsi, generated
+    xor     rax, rax
+    call    printf
+
     ; srand(time(NULL)
     mov     rdi, 0              ; arg for time(): NULL
     call    time                ; return `time` in RAX
