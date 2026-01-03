@@ -3,6 +3,7 @@ section .data
     newline     db 10,          0
     flag_short  db "-l",        0
     flag_long   db "--length",  0
+    generating  db "Generating" 0
 
 section .text
     global  main
@@ -17,13 +18,17 @@ main:
     push    rbp                 ; save base pointer
     mov     rbp, rsp            ; setup stack frame
 
+    mov     rdi, generating
+    mov     rsi, 10
+    call    printf
+
     mov     r12, 20             ; default length is 20
 
                                 ; Check if there are args
     cmp     rdi, 3              ; are there 3 args?
     jl      start_setup         ; if not, skip to defaults
 
-    mov     rbx, rsi		; Save argv pointer to RBX
+    mov     rbx, rsi		    ; Save argv pointer to RBX
 
                                 ; is it "-l"
     mov     rdi, [rbx+8]        ; argv[1] is at offset 8
