@@ -1,0 +1,24 @@
+@font-face {
+    font-family: 'OSTF';
+    src: url('~/Downloads/OSTF_Ac437Trident8x11.ttf') format('ttf');
+    font-weight: bold;
+    font-style: normal;
+}
+body {
+    font-family: 'OSTF';
+    background-color: #0a0e14;
+    color: #1793d1;
+}
+
+nav, header, section, footer {
+    box-shadow: 0 0 30px rgba(23, 147, 209, 0.3),
+                0 0 30px rgba(23, 147, 209, 0.15),
+          inset 0 0 20px rgba(23, 147, 209, 0.05);
+    border-radius: 8px;
+    padding: 10px;
+    margin: 10px;
+}
+
+nav:hover, header:hover, section:hover, footer:hover {
+    border: 2px solid #1793d1;
+}
