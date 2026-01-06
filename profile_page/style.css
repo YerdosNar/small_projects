@@ -197,6 +197,12 @@ body {
     background-color: rgba(0, 255, 0, 0.05);
 }
 
+.cmd {
+    color: yellow;
+    display: inline-block;
+    min-width: 150px;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     body {
