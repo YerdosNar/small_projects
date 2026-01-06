@@ -1,24 +1,220 @@
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
 @font-face {
     font-family: 'OSTF';
-    src: url('~/Downloads/OSTF_Ac437Trident8x11.ttf') format('ttf');
+    src: url('./OSTF_Ac437Trident8x11.ttf') format('truetype');
     font-weight: bold;
     font-style: normal;
 }
+
 body {
-    font-family: 'OSTF';
+    font-family: 'OSTF', 'Courier New', monospace;
     background-color: #0a0e14;
-    color: #1793d1;
+    background-image: url('arch_anime.jpg');
+    color: #00ff00;
+    padding: 20px;
+    line-height: 1.6;
 }
 
-nav, header, section, footer {
+/* Terminal Container */
+.terminal-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    background-color: #000000;
+    border: 2px solid #1793d1;
+    border-radius: 8px;
     box-shadow: 0 0 30px rgba(23, 147, 209, 0.3),
                 0 0 30px rgba(23, 147, 209, 0.15),
-          inset 0 0 20px rgba(23, 147, 209, 0.05);
-    border-radius: 8px;
-    padding: 10px;
-    margin: 10px;
+                inset 0 0 20px rgba(23, 147, 209, 0.05);
+    overflow: hidden;
 }
 
-nav:hover, header:hover, section:hover, footer:hover {
-    border: 2px solid #1793d1;
+/* Terminal Header */
+.terminal-header {
+    background: linear-gradient(to bottom, #2d2d2d, #1a1a1a);
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #1793d1;
+}
+
+.terminal-buttons {
+    display: flex;
+    gap: 6px;
+    margin-right: 15px;
+}
+
+.terminal-buttons span {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.btn-close {
+    background-color: #ff5f56;
+}
+
+.btn-minimize {
+    background-color: #ffbd2e;
+}
+
+.btn-maximize {
+    background-color: #27c93f;
+}
+
+.terminal-title {
+    color: #888;
+    font-size: 13px;
+    flex-grow: 1;
+    text-align: center;
+}
+
+/* Terminal Body */
+.terminal-body {
+    padding: 20px;
+    min-height: 500px;
+    background-color: #0a0e14;
+}
+
+/* Directory Navigation */
+.directory-nav {
+    margin-bottom: 10px;
+}
+
+.prompt {
+    color: #00ff00;
+    font-weight: bold;
+    margin-right: 8px;
+}
+
+.command {
+    color: #1793d1;
+    margin-right: 15px;
+}
+
+.directories {
+    display: flex;
+    gap: 20px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+.directory {
+    color: #1793d1;
+    text-decoration: none;
+    padding: 5px 10px;
+    border: 1px solid #1793d1;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    font-weight: bold;
+}
+
+.directory:hover {
+    background-color: #1793d1;
+    color: #000;
+    box-shadow: 0 0 10px rgba(23, 147, 209, 0.5);
+}
+
+/* Separator */
+.separator {
+    height: 1px;
+    background-color: #333;
+    margin: 20px 0;
+}
+
+/* Content Area */
+.content-area {
+    margin: 20px 0;
+}
+
+.prompt-line {
+    margin-bottom: 15px;
+}
+
+.content-section {
+    display: none;
+    animation: fadeIn 0.5s ease-in;
+}
+
+.content-section.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.section-title {
+    color: #ffbd2e;
+    margin-bottom: 15px;
+    font-size: 20px;
+}
+
+.content-text {
+    color: #00ff00;
+    margin-bottom: 10px;
+    line-height: 1.8;
+}
+
+/* Command Line Input */
+.command-line {
+    margin-top: 30px;
+    display: flex;
+    align-items: center;
+    padding-top: 20px;
+    border-top: 1px solid #333;
+}
+
+.command-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #00ff00;
+    font-family: 'OSTF', 'Courier New', monospace;
+    font-size: 14px;
+    outline: none;
+    padding: 5px;
+}
+
+.command-input::placeholder {
+    color: #555;
+}
+
+.command-input:focus {
+    background-color: rgba(0, 255, 0, 0.05);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    
+    .terminal-body {
+        padding: 15px;
+        min-height: 400px;
+    }
+    
+    .directories {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .directory {
+        display: block;
+        text-align: center;
+    }
 }

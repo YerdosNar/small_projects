@@ -1,27 +1,105 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <title>
-            Hello World!
-        </title>
-        <link rel="stylesheet" href="style.css">
-    </head>
-    <body>
-        <nav>
-            <ul>
-                <li>
-                    Contact me
-                </li>
-                <li>
-                    About me
-                </li>
-                <li>
-                    Projects
-                </li>
-            </ul>
-        </nav>
-        <header>
-            <h1>This is header</h1>
-        </header>
-    </body>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminal - ~/</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="terminal-container">
+        <!-- Terminal Header -->
+        <div class="terminal-header">
+            <div class="terminal-buttons">
+                <span class="btn-close"></span>
+                <span class="btn-minimize"></span>
+                <span class="btn-maximize"></span>
+            </div>
+            <div class="terminal-title">user@profile: ~/</div>
+        </div>
+
+        <!-- Terminal Body -->
+        <div class="terminal-body">
+            <!-- Directory Navigation -->
+            <div class="directory-nav">
+                <span class="prompt">$</span>
+                <span class="command">ls</span>
+                <div class="directories">
+                    <a href="#home" class="directory">~/</a>
+                    <a href="#contact" class="directory">~/ContactMe</a>
+                    <a href="#about" class="directory">~/AboutMe</a>
+                    <a href="#projects" class="directory">~/Projects</a>
+                    <a href="#assets" class="directory">~/Assets</a>
+                    <a href="https://github.com/YerdosNar" class="directory" target="_blank">~/GitHub</a>
+                </div>
+            </div>
+
+            <!-- Separator Line -->
+            <div class="separator"></div>
+
+            <!-- Main Content Area -->
+            <div class="content-area">
+                <div class="prompt-line">
+                    <span class="prompt">$</span>
+                    <span class="command">cat ~/README.md</span>
+                </div>
+                
+                <!-- Home Content -->
+                <div id="home" class="content-section active">
+                    <h2 class="section-title">Welcome to My Terminal</h2>
+                    <p class="content-text">
+                        Hello! I'm <span style="color: yellow;;">Yerdos</span>, a IT student.
+                    </p>
+                    <p class="content-text">
+                        This is my personal portfolio website designed to look like a Linux terminal.
+                        Navigate through the directories above to learn more about me, my projects, and how to contact me.
+                    </p>
+                    <p class="content-text">
+                        Type commands below or click on the directories to explore!
+                    </p>
+                </div>
+
+                <!---->
+
+                <!-- ContactMe Content -->
+                <div id="contact" class="content-section">
+                    <h2 class="section-title">~/ContactMe</h2>
+                    <p class="content-text">
+                        Email: your.email@example.com<br>
+                        GitHub: github.com/yourusername<br>
+                        LinkedIn: linkedin.com/in/yourusername<br>
+                        Twitter: @yourusername
+                    </p>
+                </div>
+
+                <!-- AboutMe Content -->
+                <div id="about" class="content-section">
+                    <h2 class="section-title">~/AboutMe</h2>
+                    <p class="content-text">
+                        [Write about yourself here]<br><br>
+                        Skills: Programming, Web Development, etc.<br>
+                        Experience: [Your experience]<br>
+                        Education: [Your education]
+                    </p>
+                </div>
+
+                <!-- Projects Content -->
+                <div id="projects" class="content-section">
+                    <h2 class="section-title">~/Projects</h2>
+                    <p class="content-text">
+                        Project 1: [Project name and description]<br>
+                        Project 2: [Project name and description]<br>
+                        Project 3: [Project name and description]
+                    </p>
+                </div>
+            </div>
+
+            <!-- Command Line Input -->
+            <div class="command-line">
+                <span class="prompt">$</span>
+                <input type="text" class="command-input" placeholder="Enter command (e.g., cd ~/Projects)" autofocus>
+            </div>
+        </div>
+    </div>
+</body>
 </html>
