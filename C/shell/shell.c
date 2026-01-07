@@ -36,35 +36,54 @@ void get_prompt_path(char *raw_path, char *home_dir, char *out_buff, size_t buf_
 int main() {
     // catch sigint
     signal(SIGINT, signal_handle);
+    signal(SIGTSTP, signal_handle);
 
-    struct passwd *info = getpwuid(1000);
+    // uid
+    uid_t uid = getuid();
+    struct passwd *info = getpwuid(uid);
+    if(!info) {
+        fprintf(stderr, "ERROR: Could not get user info\n");
+        return 1;
+    }
+
+    // get home dir and username
     char *home_dir = info->pw_dir;
     char *user_name = info->pw_name;
+    // get hostname
     char host_name[HOST_NAME_MAX + 1];
-    gethostname(host_name, HOST_NAME_MAX + 1);
+    if (gethostname(host_name, HOST_NAME_MAX + 1) == -1) {
+        strcpy(host_name, "UNKNOWN");
+    }
+
     size_t str_max = 0;
-    char pwd[1024];
+    char raw_pwd[1024];
+    char pwd[1024]; // This pwd after shortening home dir to ~
     char *lineptr = NULL;
+
     while(1) {
-        if(getcwd(pwd, sizeof(pwd)) == NULL) {
-            perror("getcwd");
+        if(getcwd(raw_pwd, sizeof(raw_pwd)) == NULL) {
+            fprintf(stderr, "ERROR: getcwd() failed.\n");
             return 1;
         }
 
-        printf("pwd: %s\n", pwd);
-        printf("hwd: %s\n", home_dir);
-        char new_pwd[strlen(pwd) - strlen(home_dir) + 3];
+        get_prompt_path(raw_pwd, home_dir, pwd, sizeof(pwd));
         printf(BLD RED "%s", user_name);
-        printf(NOC "@");
-        printf(GRN "%s", host_name);
-        printf(BLU "%s", new_pwd);
-        printf(NOC "$ ");
+        printf(NOC     "@");
+        printf(GRN     "%s", host_name);
+        printf(BLU     "%s", pwd);
+        printf(NOC     "$ ");
 
+        // read line with psaces
         ssize_t chars_read = getline(&lineptr, &str_max, stdin);
-        if(chars_read == -1) break;
 
+        // Ctrl + D print new line now
+        if(chars_read == -1) {
+            printf("\n"); break;
+        }
+
+        // skip empty lines
+        if(chars_read <= 1) continue;
         if(lineptr[chars_read - 1] == '\n') lineptr[chars_read - 1] = '\0';
-        if(chars_read == 1) continue;
 
         char *tokens[64];
         int i = 0;
@@ -77,19 +96,25 @@ int main() {
         }
         tokens[i] = NULL;
 
+        // to handle spaces, if user inputs only spaces
+        if (tokens[0] == NULL) continue;
+
         if(!strncmp(tokens[0], "exit", 4)) signal_handle(0);
         if(!strncmp(tokens[0], "cd", 2)) {
             if(tokens[1] == NULL) {
-                if(chdir(home_dir) != 0) perror("cd failed");
+                if(chdir(home_dir) != 0) fprintf(stderr, "ERROR: cd failed");
             } else {
-                if(chdir(tokens[1]) != 0) perror("cd failed");
+                if(chdir(tokens[1]) != 0) fprintf(stderr, "ERROR: cd failed");
             }
             continue;
         }
 
         int pipe_idx = -1;
         for(int j = 0; j < i; j++) {
-            if(!strcmp(tokens[j], "|")) {
+            if(!strcmp(tokens[j], "|") ||
+                tokens[j][0] == '|' ||
+                tokens[j][strlen(tokens[j])] == '|')
+            {
                 printf("PIPE FOUND: %d\n", j);
                 pipe_idx = j;
                 break;
