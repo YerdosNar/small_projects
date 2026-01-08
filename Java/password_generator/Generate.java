@@ -1,9 +1,12 @@
 import java.util.Random;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 
 public class Generate {
     static int length = 10;
     static String passwordFileName;
+    static boolean write = false;
 
     static String generatePassword() {
         char[] password = new char[length];
@@ -44,18 +47,18 @@ public class Generate {
                     }
                     System.out.println("Length: " + length);
                 }
-                else if(args[i].equals("-w") || args[i].equals("--write")) {
+                if(args[i].equals("-w") || args[i].equals("--write")) {
+                    write = true;
                     if (i+1 < args.length) {
                         passwordFileName = args[i+1];
                     } else {
                         passwordFileName = "passwordFile.txt";
                     }
+
                     try {
                         File passwordFile = new File(passwordFileName);
                         if (passwordFile.exists() && !passwordFile.isDirectory()) {
                             System.out.println("Password File exists, overwriting...");
-                        } else {
-                            passwordFile.createNewFile();
                         }
                         System.out.println("Password File: " + passwordFileName);
                     } catch (Exception e) {
@@ -66,6 +69,16 @@ public class Generate {
         }
 
         String password = generatePassword();
+        if (write) {
+            try {
+                BufferedWriter bw = new BufferedWriter(new FileWriter(new File(passwordFileName).getAbsolutePath()));
+                bw.write(password);
+                bw.close();
+            } catch(Exception e) {
+                System.out.println("ERROR: Could not write to the file...");
+                System.out.println(e);
+            }
+        }
         System.out.println("Your password: " + new String(password));
     }
 }
