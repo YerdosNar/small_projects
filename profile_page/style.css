@@ -25,7 +25,8 @@ body {
 .terminal-container {
     max-width: 1000px;
     margin: 0 auto;
-    background-color: #000000;
+    /* background-color: rgba(0, 0, 0, 0.5); */
+    backdrop-filter: blur(10px);
     border: 2px solid #1793d1;
     border-radius: 8px;
     box-shadow: 0 0 30px rgba(23, 147, 209, 0.3),
@@ -79,7 +80,8 @@ body {
 .terminal-body {
     padding: 20px;
     min-height: 500px;
-    background-color: #0a0e14;
+    background-color: rgba(10, 14, 19, 0.7);
+    backdrop-filter: blur(15px);
 }
 
 /* Directory Navigation */
