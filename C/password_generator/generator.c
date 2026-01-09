@@ -30,34 +30,52 @@ void parse_args(int argc, char **argv, Options *opts) {
     for (int i = 0; i < argc; i++) {
         if ((!strcmp(argv[i], "-l") || !strcmp(argv[i], "--length")) && i + 1 < argc) {
             opts->length = atoi(argv[i+1]);
-            if (opts->length > 80 || opts->length < 1) {
-                fprintf(stderr, RED "ERROR: Password length can be between 1~80.\n");
+            if (opts->length > 80) {
+                fprintf(stderr, BLD RED "ERROR: Password length can be between 1~80.\n");
                 printf(YEL "You set length: %d\n", opts->length);
-                printf(YEL "Setting length: 15\n" NOC);
-                opts->length = 15;
+                opts->length = 80;
+                printf(YEL "Setting length: %d\n" NOC, opts->length);
+            }
+            else if (opts->length < 5) {
+                fprintf(stderr, BLD RED "ERROR: Password length can be between 1~80.\n");
+                printf(YEL "You set length: %d\n", opts->length);
+                opts->length = 5;
+                printf(YEL "Setting length: %d\n" NOC, opts->length);
             }
         }
         else if (!strcmp(argv[i], "-w") || !strcmp(argv[i], "--write")) {
             opts->write = 1;
             if (i + 1 >= argc) {
-                printf(YEL "WARNING: File is not specified\nDefault: PasswordFile.txt\n" NOC);
+                printf(YEL BLD "WARNING: File is not specified\nDefault: PasswordFile.txt\n" NOC);
                 opts->filename = "PasswordFile.txt";
             }
             else {
                 opts->filename = argv[i+1];
             }
         }
+        else if (!strcmp(argv[i], "-h") || !strcmp(argv[i], "--help")){
+            printf("Usage: %s [options]\n", argv[0]);
+            printf("\n");
+            printf("Options:\n");
+            printf("    -l/--length <number>        set length of the password [default=15].\n");
+            printf("    -l/--write <filename>       save password to a file [default=PasswordFile.txt]\n");
+            printf("\n");
+            printf("Example:\n");
+            printf("    %s -l 40 -w my_password.txt\n", argv[0]);
+            printf("Generates password of length 40, and saves to 'my_password.txt' file\n");
+            exit(0);
+        }
     }
 }
 
 void print_value(Options opts) {
-    printf(CYN "\n====================");
-    printf(BLU "\nPassword Length  : " GRN "%d", opts.length);
-    printf(BLU "\nPassword         : " GRN "%s", opts.password);
+    printf(BLD CYN "\n+====================" NOC);
+    printf(BLU BLD "\n| Password Length  : " NOC GRN "%d", opts.length);
+    printf(BLU BLD "\n| Password         : " NOC GRN "%s", opts.password);
     if (opts.write) {
-        printf(BLU "\nPassword Filename: " GRN "%s", opts.filename);
+        printf(BLU BLD "\n| Password Filename: " GRN "%s", opts.filename);
     }
-    printf(CYN "\n====================\n" NOC);
+    printf(BLD CYN "\n+====================\n" NOC);
 }
 
 void generate(Options *opts) {

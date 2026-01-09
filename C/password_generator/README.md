@@ -3,8 +3,8 @@
 - ## Flags:
     - #### -l, --length
         to set the length of the password
-    - #### -f, --first-name
-        to add first name to the password
+    - #### -w, --write
+        to save password in a file
 
 - ## Compile:
     ```bash
