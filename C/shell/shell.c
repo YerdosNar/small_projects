@@ -6,6 +6,7 @@
 #include <limits.h>
 #include <pwd.h>
 
+// Color
 #define RED "\033[31m"
 #define GRN "\033[32m"
 #define BLU "\033[34m"
@@ -13,6 +14,7 @@
 #define BLD "\033[1m"
 #define NOC "\033[0m"
 
+// To handle signals
 void signal_handle(int sig) {
     printf("\n" CYN "===================\n");
     printf("     Exiting...\n");

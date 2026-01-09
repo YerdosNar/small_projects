@@ -208,17 +208,17 @@ body {
     body {
         padding: 10px;
     }
-    
+
     .terminal-body {
         padding: 15px;
         min-height: 400px;
     }
-    
+
     .directories {
         flex-direction: column;
         gap: 10px;
     }
-    
+
     .directory {
         display: block;
         text-align: center;
