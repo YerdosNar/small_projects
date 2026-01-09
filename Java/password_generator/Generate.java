@@ -1,26 +1,17 @@
 import java.util.Random;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 
 public class Generate {
     static int length = 10;
+    static String passwordFileName;
+    static boolean write = false;
 
-    public static void main(String[] args) {
-        if (args.length < 2) {
-            System.out.println("Password length default = 15");
-        } else {
-            if (args[0].equals("-l") || args[0].equals("--length")) {
-                try {
-                    length = Integer.parseInt(args[1]);
-                } catch (NumberFormatException e) {
-                    System.out.println("ERROR: Please input number after '-l/--length' flag!");
-                }
-                System.out.println("Length: " + length);
-            }
-        }
-
+    static String generatePassword() {
         char[] password = new char[length];
         Random ran = new Random();
         int choose = ran.nextInt(2);
-        System.out.println("Choose: " + choose);
         if (choose == 1) {
             password[0] = (char)(65 + ran.nextInt(26));
         } else {
@@ -29,21 +20,65 @@ public class Generate {
 
         for(int i = 1; i < length; i++) {
             choose = ran.nextInt(3);
-            System.out.print("Choose: " + choose);
             if(choose == 0) {
                 password[i] = (char)(ran.nextInt(10) + 48);
-                System.out.println(" Generated: " + password[i]);
             }
             else if (choose == 1) {
                 password[i] = (char)(65 + ran.nextInt(26));
-                System.out.println(" Generated: " + password[i]);
             }
             else if (choose == 2) {
                 password[i] = (char)(97 + ran.nextInt(26));
-                System.out.println(" Generated: " + password[i]);
             }
         }
 
+        return new String(password);
+    }
+
+    public static void main(String[] args) {
+        if (args.length < 2) {
+            System.out.println("Password length default=" + length);
+        } else {
+            for (int i = 0; i < args.length; i++) {
+                if (args[i].equals("-l") || args[i].equals("--length") && i+1 < args.length) {
+                    try {
+                        length = Integer.parseInt(args[i+1]);
+                    } catch (NumberFormatException e) {
+                        System.out.println("ERROR: Please input number after '-l/--length' flag!");
+                    }
+                    System.out.println("Length: " + length);
+                }
+                if(args[i].equals("-w") || args[i].equals("--write")) {
+                    write = true;
+                    if (i+1 < args.length) {
+                        passwordFileName = args[i+1];
+                    } else {
+                        passwordFileName = "passwordFile.txt";
+                    }
+
+                    try {
+                        File passwordFile = new File(passwordFileName);
+                        if (passwordFile.exists() && !passwordFile.isDirectory()) {
+                            System.out.println("Password File exists, overwriting...");
+                        }
+                        System.out.println("Password File: " + passwordFileName);
+                    } catch (Exception e) {
+                        System.out.println("ERROR: " + e.getMessage());
+                    }
+                }
+            }
+        }
+
+        String password = generatePassword();
+        if (write) {
+            try {
+                BufferedWriter bw = new BufferedWriter(new FileWriter(new File(passwordFileName).getAbsolutePath()));
+                bw.write(password);
+                bw.close();
+            } catch(Exception e) {
+                System.out.println("ERROR: Could not write to the file...");
+                System.out.println(e);
+            }
+        }
         System.out.println("Your password: " + new String(password));
     }
 }
