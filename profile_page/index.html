@@ -26,15 +26,46 @@
                 <button class="dir-button" data-section="projects">~/Projects</button>
                 <button class="dir-button" data-section="about">~/About</button>
                 <button class="dir-button" data-section="assets">~/Assets</button>
-                <button class="dir-button" data-section="https://github.com/YerdosNar">~/GitHub</a>
+                <!-- <a href="https://github.com/YerdosNar">~/GitHub</a> -->
             </div>
 
             <section id="home" class="terminal-section active">
+                <div class="prompt-line">
+                    <div class="prompt-context">
+                        <span class="user">user</span><span class="at">@</span><span class="host">profile</span>
+                    </div>
+
+                    <span class="cmd">cat index.txt</span>
+                </div>
                 <h1>Welcome to My Profile</h1>
                 <p>This is the home section of my terminal-style profile page.</p>
             </section>
+
+            <section id="contact" class="terminal-section">
+            </section>
+
+            <section id="projects" class="terminal-section">
+            </section>
+
+            <section id="about" class="terminal-section">
+            </section>
+
+            <section id="assets" class="terminal-section">
+            </section>
         </main>
+
+        <div class="terminal-input" id="input-container">
+            <div class="prompt-line">
+                <div class="prompt-context">
+                    <span class="user">user</span><span class="at">@</span><span class="host">profile</span>
+                </div>
+            </div>
+            <span id="typed-text"></span><span class="cursor">_</span>
+            <input type="text" id="ghost-input" autocomplete="off" spellcheck="false"/>
+        </div>
     </div>
+
+    <script src="script.js"></script>
 </body>
 
 </html>
