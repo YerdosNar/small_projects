@@ -10,58 +10,333 @@
 
 <body>
     <div class="terminal-container">
+        <!-- Terminal Header -->
         <header class="terminal-header">
             <div class="terminal-buttons">
-                <button class="btn-close"></button>
-                <button class="btn-minimize"></button>
-                <button class="btn-maximize"></button>
+                <button class="btn-close" aria-label="Close"></button>
+                <button class="btn-minimize" aria-label="Minimize"></button>
+                <button class="btn-maximize" aria-label="Maximize"></button>
             </div>
             <p class="terminal-title">Terminal - ~/</p>
         </header>
 
+        <!-- Terminal Body -->
         <main class="terminal-body">
-            <div class="terminal-directory">
+            <!-- Navigation -->
+            <nav class="terminal-directory">
                 <button class="dir-button active" data-section="home">~/</button>
                 <button class="dir-button" data-section="contact">~/Contact</button>
                 <button class="dir-button" data-section="projects">~/Projects</button>
                 <button class="dir-button" data-section="about">~/About</button>
                 <button class="dir-button" data-section="assets">~/Assets</button>
-                <!-- <a href="https://github.com/YerdosNar">~/GitHub</a> -->
-            </div>
+            </nav>
 
+            <!-- Home Section -->
             <section id="home" class="terminal-section active">
                 <div class="prompt-line">
                     <div class="prompt-context">
                         <span class="user">user</span><span class="at">@</span><span class="host">profile</span><span class="pwd">~/</span>
                     </div>
-
-                    <span class="cmd">&nbsp;cat index.txt</span>
+                    <span class="cmd">&nbsp;cat welcome.txt</span>
                 </div>
-                <h1>Welcome to My Profile</h1>
-                <p>This is the home section of my terminal-style profile page.</p>
+                <div class="cmd-output">
+                    <pre class="ascii-art">
+ __   __              _
+ \ \ / /__ _ __ _  __| | ___  ___
+  \ V / _ \ '__| |/ _` |/ _ \/ __|
+   | |  __/ |  | | (_| | (_) \__ \
+   |_|\___|_|  |_|\__,_|\___/|___/
+                                  </pre>
+                    <h1>Welcome to My Terminal</h1>
+                    <p>Navigate using the buttons above or type commands below.</p>
+                    <p class="hint">Type <code>help</code> for available commands.</p>
+                </div>
+                <div class="dynamic-output"></div>
             </section>
 
+            <!-- Contact Section -->
             <section id="contact" class="terminal-section">
+                <div class="prompt-line">
+                    <div class="prompt-context">
+                        <span class="user">user</span><span class="at">@</span><span class="host">profile</span><span class="pwd">~/Contact</span>
+                    </div>
+                    <span class="cmd">&nbsp;ls -al</span>
+                </div>
+                <div class="cmd-output ls-output visible">
+                    <div class="ls-header">total 5</div>
+                    <div class="ls-row">
+                        <span class="ls-permissions">drwxr-xr-x</span>
+                        <span class="ls-links">2</span>
+                        <span class="ls-owner">user</span>
+                        <span class="ls-group">user</span>
+                        <span class="ls-size">4096</span>
+                        <span class="ls-date">Jan 12</span>
+                        <span class="ls-name directory">.</span>
+                    </div>
+                    <div class="ls-row">
+                        <span class="ls-permissions">drwxr-xr-x</span>
+                        <span class="ls-links">5</span>
+                        <span class="ls-owner">user</span>
+                        <span class="ls-group">user</span>
+                        <span class="ls-size">4096</span>
+                        <span class="ls-date">Jan 12</span>
+                        <span class="ls-name directory">..</span>
+                    </div>
+                    <div class="ls-row">
+                        <span class="ls-permissions">-rw-r--r--</span>
+                        <span class="ls-links">1</span>
+                        <span class="ls-owner">user</span>
+                        <span class="ls-group">user</span>
+                        <span class="ls-size">256</span>
+                        <span class="ls-date">Jan 12</span>
+                        <a href="mailto:yerdosnarzhigit@gmail.com" class="ls-name link">Email</a>
+                    </div>
+                    <div class="ls-row">
+                        <span class="ls-permissions">-rw-r--r--</span>
+                        <span class="ls-links">1</span>
+                        <span class="ls-owner">user</span>
+                        <span class="ls-group">user</span>
+                        <span class="ls-size">256</span>
+                        <span class="ls-date">Jan 12</span>
+                        <a href="https://linkedin.com/in/YerdosNar" target="_blank" class="ls-name link">LinkedIn</a>
+                    </div>
+                    <div class="ls-row">
+                        <span class="ls-permissions">-rw-r--r--</span>
+                        <span class="ls-links">1</span>
+                        <span class="ls-owner">user</span>
+                        <span class="ls-group">user</span>
+                        <span class="ls-size">256</span>
+                        <span class="ls-date">Jan 12</span>
+                        <a href="https://github.com/YerdosNar" target="_blank" class="ls-name link">GitHub</a>
+                    </div>
+                    <div class="ls-row">
+                        <span class="ls-permissions">-rw-r--r--</span>
+                        <span class="ls-links">1</span>
+                        <span class="ls-owner">user</span>
+                        <span class="ls-group">user</span>
+                        <span class="ls-size">256</span>
+                        <span class="ls-date">Jan 12</span>
+                        <a href="https://instagram.com/uvenni" target="_blank" class="ls-name link">Instagram</a>
+                    </div>
+                    <div class="ls-row">
+                        <span class="ls-permissions">drwxr-xr-x</span>
+                        <span class="ls-links">2</span>
+                        <span class="ls-owner">user</span>
+                        <span class="ls-group">user</span>
+                        <span class="ls-size">4096</span>
+                        <span class="ls-date">Jan 12</span>
+                        <span class="ls-name directory clickable" onclick="terminal.handleCd('LeaveMessage')">LeaveMessage</span>
+                    </div>
+                </div>
+                <p class="hint">Type <code>cd LeaveMessage</code> to leave a message.</p>
+
+                <!-- Leave Message Form -->
+                <div class="leave-message-form">
+                    <div class="prompt-line">
+                        <div class="prompt-context">
+                            <span class="user">user</span><span class="at">@</span><span class="host">profile</span><span class="pwd">~/Contact/LeaveMessage</span>
+                        </div>
+                    </div>
+                    <form id="comment-form" class="terminal-form">
+                        <div class="form-row">
+                            <label for="comment-name">Name:</label>
+                            <input type="text" id="comment-name" name="name" maxlength="50" required
+                                   placeholder="Enter your name" autocomplete="off">
+                        </div>
+                        <div class="form-row">
+                            <label for="comment-text">Comment:</label>
+                            <textarea id="comment-text" name="comment" maxlength="256" rows="4" required
+                                      placeholder="Enter your message (max 256 characters)"></textarea>
+                        </div>
+                        <div class="form-row">
+                            <span class="char-count"><span id="char-current">0</span>/256</span>
+                            <button type="submit" class="submit-btn">Send Message</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="dynamic-output"></div>
             </section>
 
+            <!-- Projects Section -->
             <section id="projects" class="terminal-section">
+                <div class="prompt-line">
+                    <div class="prompt-context">
+                        <span class="user">user</span><span class="at">@</span><span class="host">profile</span><span class="pwd">~/Projects</span>
+                    </div>
+                    <span class="cmd">&nbsp;ls -al</span>
+                </div>
+                <div class="cmd-output ls-output visible">
+                    <div class="ls-header">total 4</div>
+                    <div class="ls-row">
+                        <span class="ls-permissions">drwxr-xr-x</span>
+                        <span class="ls-links">2</span>
+                        <span class="ls-owner">user</span>
+                        <span class="ls-group">user</span>
+                        <span class="ls-size">4096</span>
+                        <span class="ls-date">Jan 12</span>
+                        <span class="ls-name directory">.</span>
+                    </div>
+                    <div class="ls-row">
+                        <span class="ls-permissions">drwxr-xr-x</span>
+                        <span class="ls-links">5</span>
+                        <span class="ls-owner">user</span>
+                        <span class="ls-group">user</span>
+                        <span class="ls-size">4096</span>
+                        <span class="ls-date">Jan 12</span>
+                        <span class="ls-name directory">..</span>
+                    </div>
+                    <div class="ls-row">
+                        <span class="ls-permissions">drwxr-xr-x</span>
+                        <span class="ls-links">3</span>
+                        <span class="ls-owner">user</span>
+                        <span class="ls-group">user</span>
+                        <span class="ls-size">4096</span>
+                        <span class="ls-date">Dec 15</span>
+                        <span class="ls-name directory">PasswordGenerator</span>
+                    </div>
+                    <div class="ls-row">
+                        <span class="ls-permissions">drwxr-xr-x</span>
+                        <span class="ls-links">2</span>
+                        <span class="ls-owner">user</span>
+                        <span class="ls-group">user</span>
+                        <span class="ls-size">4096</span>
+                        <span class="ls-date">Nov 20</span>
+                        <span class="ls-name directory">CustomShell</span>
+                    </div>
+                    <div class="ls-row">
+                        <span class="ls-permissions">drwxr-xr-x</span>
+                        <span class="ls-links">2</span>
+                        <span class="ls-owner">user</span>
+                        <span class="ls-group">user</span>
+                        <span class="ls-size">4096</span>
+                        <span class="ls-date">Jan 12</span>
+                        <span class="ls-name directory">TerminalProfile</span>
+                    </div>
+                </div>
+                <div class="project-cards">
+                    <article class="project-card">
+                        <h3>🔐 Password Generator</h3>
+                        <p>Implementations in C (with ASM) and Java for generating secure passwords.</p>
+                        <div class="project-tags">
+                            <span class="tag">C</span>
+                            <span class="tag">Assembly</span>
+                            <span class="tag">Java</span>
+                        </div>
+                    </article>
+                    <article class="project-card">
+                        <h3>🐚 Custom Shell</h3>
+                        <p>A custom shell implementation in C and Java with basic command execution.</p>
+                        <div class="project-tags">
+                            <span class="tag">C</span>
+                            <span class="tag">Java</span>
+                            <span class="tag">Systems</span>
+                        </div>
+                    </article>
+                    <article class="project-card">
+                        <h3>💻 Terminal Profile</h3>
+                        <p>This terminal-style portfolio website with Spring Boot backend.</p>
+                        <div class="project-tags">
+                            <span class="tag">HTML/CSS/JS</span>
+                            <span class="tag">Spring Boot</span>
+                            <span class="tag">MariaDB</span>
+                        </div>
+                    </article>
+                </div>
+                <div class="dynamic-output"></div>
             </section>
 
+            <!-- About Section -->
             <section id="about" class="terminal-section">
+                <div class="prompt-line">
+                    <div class="prompt-context">
+                        <span class="user">user</span><span class="at">@</span><span class="host">profile</span><span class="pwd">~/About</span>
+                    </div>
+                    <span class="cmd">&nbsp;cat about.txt</span>
+                </div>
+                <div class="cmd-output">
+                    <h2>About Me</h2>
+                    <p>Hello! I'm a developer who enjoys building things from the ground up.</p>
+                    <p>I work with low-level languages like C and Assembly, as well as Java and web technologies.</p>
+
+                    <h3>Skills</h3>
+                    <div class="skills-grid">
+                        <div class="skill-category">
+                            <h4>Languages</h4>
+                            <ul>
+                                <li>C / Assembly</li>
+                                <li>Java</li>
+                                <li>JavaScript</li>
+                                <li>SQL</li>
+                            </ul>
+                        </div>
+                        <div class="skill-category">
+                            <h4>Frameworks</h4>
+                            <ul>
+                                <li>Spring Boot</li>
+                                <li>HTML/CSS</li>
+                            </ul>
+                        </div>
+                        <div class="skill-category">
+                            <h4>Tools</h4>
+                            <ul>
+                                <li>Git</li>
+                                <li>Linux</li>
+                                <li>MariaDB</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="dynamic-output"></div>
             </section>
 
+            <!-- Assets Section -->
             <section id="assets" class="terminal-section">
+                <div class="prompt-line">
+                    <div class="prompt-context">
+                        <span class="user">user</span><span class="at">@</span><span class="host">profile</span><span class="pwd">~/Assets</span>
+                    </div>
+                    <span class="cmd">&nbsp;ls -al</span>
+                </div>
+
+                <!-- Public Assets -->
+                <div class="cmd-output public-assets">
+                    <div class="ls-header">
+                        <span class="section-label">📂 Public Assets</span>
+                        <span>total 2</span>
+                    </div>
+                    <div class="asset-list">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Private Assets (hidden until auth) -->
+                <div class="cmd-output private-assets">
+                    <div class="ls-header">
+                        <span class="section-label">🔒 Private Assets</span>
+                        <span>total 2</span>
+                    </div>
+                    <div class="asset-list">
+                        <!-- Populated by JavaScript after auth -->
+                    </div>
+                </div>
+
+                <p class="hint auth-hint">
+                    Type <code>auth &lt;password&gt;</code> to view private assets (certificates, etc.)
+                </p>
+                <div class="dynamic-output"></div>
             </section>
         </main>
 
+        <!-- Terminal Input -->
         <div class="terminal-input" id="input-container">
             <div class="prompt-line">
                 <div class="prompt-context">
                     <span class="user">user</span><span class="at">@</span><span class="host">profile</span><span class="pwd">~/</span>
                 </div>
+                <span>&nbsp;</span>
             </div>
             <span id="typed-text"></span><span class="cursor">_</span>
-            <input type="text" id="ghost-input" autocomplete="off" spellcheck="false"/>
+            <input type="text" id="ghost-input" autocomplete="off" spellcheck="false" aria-label="Terminal input">
         </div>
     </div>
 

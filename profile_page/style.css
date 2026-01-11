@@ -1,4 +1,29 @@
-/* Reset and Base Styles */
+/**
+ * Terminal Profile Page Styles
+ * A terminal-themed portfolio website
+ * 
+ * Table of Contents:
+ * 1. Reset & Base Styles
+ * 2. Color Variables
+ * 3. Terminal Container
+ * 4. Terminal Header & Buttons
+ * 5. Terminal Body & Navigation
+ * 6. Prompt Styles
+ * 7. Command Output & Sections
+ * 8. ls -al Output Styles
+ * 9. Form Styles
+ * 10. Project Cards
+ * 11. Skills Grid
+ * 12. Assets Section
+ * 13. Terminal Input & Cursor
+ * 14. Utility Classes
+ * 15. Animations
+ */
+
+/* =============================================================================
+   1. RESET & BASE STYLES
+   ============================================================================= */
+
 * {
     margin: 0;
     padding: 0;
@@ -12,33 +37,78 @@
     font-style: normal;
 }
 
+html {
+    font-size: 16px;
+}
+
 body {
     font-family: 'Courier New', Courier, monospace;
     background-image: url('arch_anime.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
     color: #00ff00;
     padding: 20px;
+    min-height: 100vh;
 }
 
-/* START Terminal container styles */
+/* =============================================================================
+   2. COLOR VARIABLES (CSS Custom Properties)
+   ============================================================================= */
+
+:root {
+    /* Primary colors */
+    --color-primary: #1793d1;
+    --color-primary-glow: rgba(23, 147, 209, 0.5);
+    --color-accent: #ff69b4;
+    --color-success: #27c93f;
+    --color-warning: #ffbd2e;
+    --color-error: #ff5f56;
+    
+    /* Text colors */
+    --color-text: #00ff00;
+    --color-text-white: #ffffff;
+    --color-text-muted: #888888;
+    
+    /* Background colors */
+    --color-bg-dark: rgba(0, 0, 0, 0.5);
+    --color-bg-header: linear-gradient(to bottom, #2d2d2d, #1a1a1a);
+    
+    /* Semantic colors */
+    --color-directory: #1793d1;
+    --color-file: #00ff00;
+    --color-link: #ff69b4;
+    --color-executable: #27c93f;
+}
+
+/* =============================================================================
+   3. TERMINAL CONTAINER
+   ============================================================================= */
+
 .terminal-container {
     max-width: 1200px;
     margin: 0 auto;
-    border: 2px solid #1793d1;
+    border: 2px solid var(--color-primary);
     border-radius: 8px;
-    box-shadow: 0 0 30px rgba(23, 147, 209, 0.5);
+    box-shadow: 0 0 30px var(--color-primary-glow);
     overflow: hidden;
+    background-color: var(--color-bg-dark);
+    backdrop-filter: blur(15px);
 }
-/* START Terminal header styles */
+
+/* =============================================================================
+   4. TERMINAL HEADER & BUTTONS
+   ============================================================================= */
+
 .terminal-header {
     display: flex;
     align-items: center;
     padding: 8px 12px;
-    background: linear-gradient(to bottom, #2d2d2d, #1a1a1a);
-    border-bottom: 2px solid #1793d1;
+    background: var(--color-bg-header);
+    border-bottom: 2px solid var(--color-primary);
     position: relative;
 }
 
-/* START Terminal button styles */
 .terminal-buttons {
     display: flex;
     gap: 8px;
@@ -50,103 +120,102 @@ body {
     height: 12px;
     border: none;
     border-radius: 50%;
-    display: inline-block;
+    cursor: pointer;
+    transition: filter 0.2s, box-shadow 0.2s;
 }
+
 .terminal-buttons button:hover {
     filter: brightness(85%);
-    box-shadow: 0 0 10px rgba(23, 147, 209, 0.9);
+    box-shadow: 0 0 10px var(--color-primary-glow);
 }
 
-/* START Individual button colors */
-.btn-close {
-    background-color: #ff5f56;
-}
-.btn-minimize {
-    background-color: #ffbd2e;
-}
-.btn-maximize {
-    background-color: #27c93f;
-}
-/* END Individual button colors */
-/* END Terminal button styles */
+.btn-close { background-color: var(--color-error); }
+.btn-minimize { background-color: var(--color-warning); }
+.btn-maximize { background-color: var(--color-success); }
 
-/* START Terminal title styles */
 .terminal-title {
     font-family: 'Courier New', Courier, monospace;
-    color: #ffffff;
+    color: var(--color-text-white);
     font-size: 18px;
-
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
     margin: 0;
     pointer-events: none;
 }
-/* END Terminal title styles */
-/* END Terminal header styles */
 
-/* START Terminal body styles */
+/* =============================================================================
+   5. TERMINAL BODY & NAVIGATION
+   ============================================================================= */
+
 .terminal-body {
-    background-color: rgba(0, 0, 0, 0.5);
     padding: 20px;
     font-size: 18px;
     line-height: 1.5;
-    min-height: 0;
-    color: #00ff00;
+    min-height: 400px;
+    color: var(--color-text);
     overflow-y: auto;
-    backdrop-filter: blur(15px);
 }
 
+.terminal-directory {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(23, 147, 209, 0.3);
+}
 
-/* START Individual Directory Item styles */
 .dir-button {
     background-color: transparent;
-    color: #1793d1;
-    font-size: 18px;
+    color: var(--color-primary);
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 16px;
     text-decoration: none;
-    margin-right: 15px;
-    border: 1px solid #1793d1;
-    padding: 2px 6px;
+    border: 1px solid var(--color-primary);
+    padding: 6px 12px;
     border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
 .dir-button:hover {
-    background-color: #1793d1;
-    color: pink;
-    border-color: pink;
-    box-shadow: 0 0 10px pink; /*rgba(23, 147, 209, 0.9);*/
+    background-color: var(--color-primary);
+    color: var(--color-accent);
+    border-color: var(--color-accent);
+    box-shadow: 0 0 10px var(--color-accent);
     transform: translateY(-2px);
 }
 
 .dir-button.active {
-    background-color: #1793d1;
+    background-color: var(--color-primary);
     color: #0d1117;
     box-shadow: 0 0 20px rgba(23, 147, 209, 0.8),
                 inset 0 0 10px rgba(255, 255, 255, 0.2);
-    text-shadow: none;
     font-weight: bold;
 }
-/* END Individual Directory Item styles */
 
-/* START Prompt styles */
+/* =============================================================================
+   6. PROMPT STYLES
+   ============================================================================= */
+
 .prompt-line {
     display: flex;
     align-items: center;
-    margin-bottom: 10px;
-    margin-top: 10px;
+    margin: 10px 0;
 }
 
 .prompt-context {
-    background-color: #ff69b4;
+    background-color: var(--color-accent);
     padding: 4px 8px 4px 12px;
     position: relative;
     display: flex;
     align-items: center;
     margin-right: 10px;
-    height: 20px;
-
+    height: 24px;
     border-top-left-radius: 10px;
     border-bottom-left-radius: 10px;
+    font-size: 14px;
 }
 
 .prompt-context::after {
@@ -156,65 +225,369 @@ body {
     left: 100%;
     width: 0;
     height: 0;
-
-    border-top: 10px solid transparent;
-    border-bottom: 10px solid transparent;
-    border-left: 10px solid #ff69b4;
+    border-top: 12px solid transparent;
+    border-bottom: 12px solid transparent;
+    border-left: 12px solid var(--color-accent);
     z-index: 1;
 }
 
-.prompt-context .user {
-    color: #006400;
-    font-weight: bold;
-}
-.prompt-context .at {
-    color: white;
-    font-weight: normal;
-    margin: 0;
-}
-.prompt-context .host {
-    color: #8b0000;
-    font-weight: bold;
-}
-.prompt-context .pwd {
-    color: blue;
-    font-weight: bold;
-}
+.prompt-context .user { color: #006400; font-weight: bold; }
+.prompt-context .at { color: white; margin: 0; }
+.prompt-context .host { color: #8b0000; font-weight: bold; }
+.prompt-context .pwd { color: #00008b; font-weight: bold; }
 
 .cmd {
-    font-family: 'OSTF';
-    color: #00ff00;
+    font-family: 'OSTF', 'Courier New', monospace;
+    color: var(--color-text);
     font-size: 18px;
-    align-self: center;
 }
-/* END Prompty styles */
 
-/* START Terminal Section styles */
+/* =============================================================================
+   7. COMMAND OUTPUT & SECTIONS
+   ============================================================================= */
+
+.cmd-output {
+    border-radius: 5px;
+    border: 1px solid var(--color-primary);
+    padding: 15px;
+    margin: 10px 0;
+    background-color: rgba(0, 0, 0, 0.3);
+}
+
+.cmd-output h1,
+.cmd-output h2 {
+    color: #ffff00;
+    text-shadow: 0 0 10px var(--color-primary-glow);
+    margin-bottom: 10px;
+}
+
+.cmd-output h3 {
+    color: var(--color-primary);
+    margin: 15px 0 10px;
+}
+
+.cmd-output p {
+    margin: 8px 0;
+    line-height: 1.6;
+}
+
+.cmd-output code {
+    background-color: rgba(23, 147, 209, 0.2);
+    padding: 2px 6px;
+    border-radius: 3px;
+    color: var(--color-accent);
+}
+
+.hint {
+    color: var(--color-text-muted);
+    font-size: 14px;
+    margin-top: 10px;
+}
+
 .terminal-section {
     display: none;
 }
 
 .terminal-section.active {
     display: block;
-    animation: fadeIn 0.5s ease-in-out;
+    animation: fadeIn 0.3s ease-in-out;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translate(0); }
+.dynamic-output {
+    margin-top: 15px;
 }
-/* END Terminal Section styles */
 
-/* START Terminal input styles */
+.output-line {
+    font-family: 'Courier New', Courier, monospace;
+    white-space: pre-wrap;
+    margin: 5px 0;
+    padding: 5px;
+}
+
+.error-output { color: var(--color-error); }
+.success-output { color: var(--color-success); }
+.info-output { color: var(--color-primary); }
+.help-output { color: var(--color-text); background-color: rgba(0, 0, 0, 0.3); border-radius: 4px; }
+
+.ascii-art {
+    color: var(--color-primary);
+    font-size: 12px;
+    line-height: 1.2;
+    margin-bottom: 15px;
+}
+
+/* =============================================================================
+   8. LS -AL OUTPUT STYLES
+   ============================================================================= */
+
+.ls-output {
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 14px;
+}
+
+.ls-header {
+    color: var(--color-text-muted);
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.section-label {
+    color: var(--color-primary);
+    font-weight: bold;
+}
+
+.ls-row {
+    display: grid;
+    grid-template-columns: 100px 30px 50px 50px 60px 70px 1fr;
+    gap: 10px;
+    padding: 3px 0;
+    align-items: center;
+}
+
+.ls-row:hover {
+    background-color: rgba(23, 147, 209, 0.1);
+}
+
+.ls-permissions { color: var(--color-text-muted); }
+.ls-links { color: var(--color-text-muted); text-align: right; }
+.ls-owner { color: var(--color-warning); }
+.ls-group { color: var(--color-warning); }
+.ls-size { color: var(--color-success); text-align: right; }
+.ls-date { color: var(--color-primary); }
+
+.ls-name { font-weight: bold; }
+.ls-name.directory { color: var(--color-directory); }
+.ls-name.file { color: var(--color-file); }
+.ls-name.link { 
+    color: var(--color-link); 
+    text-decoration: none;
+    cursor: pointer;
+}
+.ls-name.link:hover { 
+    text-decoration: underline;
+    text-shadow: 0 0 5px var(--color-link);
+}
+.ls-name.clickable {
+    cursor: pointer;
+}
+.ls-name.clickable:hover {
+    text-shadow: 0 0 5px var(--color-directory);
+}
+
+/* =============================================================================
+   9. FORM STYLES
+   ============================================================================= */
+
+.leave-message-form {
+    display: none;
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid var(--color-primary);
+    border-radius: 5px;
+    background-color: rgba(0, 0, 0, 0.3);
+}
+
+.leave-message-form.visible {
+    display: block;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.terminal-form {
+    margin-top: 15px;
+}
+
+.form-row {
+    display: flex;
+    align-items: flex-start;
+    margin: 10px 0;
+    gap: 10px;
+}
+
+.form-row label {
+    color: var(--color-primary);
+    min-width: 80px;
+    padding-top: 8px;
+}
+
+.form-row input,
+.form-row textarea {
+    flex: 1;
+    background-color: rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--color-primary);
+    border-radius: 4px;
+    padding: 8px 12px;
+    color: var(--color-text);
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-row input:focus,
+.form-row textarea:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 10px rgba(255, 105, 180, 0.3);
+}
+
+.form-row input::placeholder,
+.form-row textarea::placeholder {
+    color: var(--color-text-muted);
+}
+
+.form-row textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.char-count {
+    color: var(--color-text-muted);
+    font-size: 12px;
+}
+
+.submit-btn {
+    background-color: var(--color-primary);
+    color: #0d1117;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 4px;
+    font-family: 'Courier New', Courier, monospace;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-left: auto;
+}
+
+.submit-btn:hover {
+    background-color: var(--color-accent);
+    box-shadow: 0 0 15px var(--color-accent);
+    transform: translateY(-2px);
+}
+
+/* =============================================================================
+   10. PROJECT CARDS
+   ============================================================================= */
+
+.project-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.project-card {
+    background-color: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--color-primary);
+    border-radius: 8px;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+
+.project-card:hover {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 20px rgba(23, 147, 209, 0.3);
+    transform: translateY(-5px);
+}
+
+.project-card h3 {
+    color: var(--color-primary);
+    margin-bottom: 10px;
+}
+
+.project-card p {
+    color: var(--color-text-muted);
+    font-size: 14px;
+    margin-bottom: 15px;
+}
+
+.project-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.tag {
+    background-color: rgba(23, 147, 209, 0.2);
+    color: var(--color-primary);
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    border: 1px solid var(--color-primary);
+}
+
+/* =============================================================================
+   11. SKILLS GRID
+   ============================================================================= */
+
+.skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 20px;
+    margin-top: 15px;
+}
+
+.skill-category h4 {
+    color: var(--color-accent);
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--color-accent);
+    padding-bottom: 5px;
+}
+
+.skill-category ul {
+    list-style: none;
+}
+
+.skill-category li {
+    color: var(--color-text);
+    padding: 3px 0;
+    position: relative;
+    padding-left: 15px;
+}
+
+.skill-category li::before {
+    content: '>';
+    position: absolute;
+    left: 0;
+    color: var(--color-primary);
+}
+
+/* =============================================================================
+   12. ASSETS SECTION
+   ============================================================================= */
+
+.public-assets,
+.private-assets {
+    margin-bottom: 20px;
+}
+
+.private-assets {
+    display: none;
+    border-color: var(--color-accent);
+}
+
+.private-assets.visible {
+    display: block;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.private-assets .section-label {
+    color: var(--color-accent);
+}
+
+.auth-hint code {
+    color: var(--color-success);
+}
+
+/* =============================================================================
+   13. TERMINAL INPUT & CURSOR
+   ============================================================================= */
+
 .terminal-input {
     display: flex;
     align-items: center;
-    padding: 10px;
-    border-radius: 4px;
-    background-color: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(15px);
-    color: #00ff00;
-    font-size: 16px;
+    padding: 15px 20px;
+    border-top: 1px solid rgba(23, 147, 209, 0.3);
+    background-color: rgba(0, 0, 0, 0.3);
     cursor: text;
 }
 
@@ -225,23 +598,81 @@ body {
     left: 0;
     height: 0;
     width: 0;
+    pointer-events: none;
 }
 
-/* The Blinking Block Cursor */
+#typed-text {
+    color: var(--color-text);
+    font-family: 'OSTF', 'Courier New', monospace;
+    font-size: 18px;
+}
+
 .cursor {
     display: inline-block;
-    background-color: #00ff00;
-    color: #000; /* Text inside cursor usually inverse */
-    animation: blink 1s step-end infinite;
-    vertical-align: bottom;
-    width: 10px; /* Width of the block */
+    background-color: var(--color-text);
+    color: #000;
+    width: 10px;
     height: 1.2em;
+    vertical-align: bottom;
+    animation: blink 1s step-end infinite;
+}
+
+/* =============================================================================
+   14. UTILITY CLASSES
+   ============================================================================= */
+
+.visible { display: block !important; }
+.hidden { display: none !important; }
+
+/* =============================================================================
+   15. ANIMATIONS
+   ============================================================================= */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 @keyframes blink {
     0%, 100% { opacity: 1; }
     50% { opacity: 0; }
 }
-/* END Terminal input styles */
-/* END Terminal body styles */
-/* END Terminal Container styles */
+
+/* =============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================= */
+
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+
+    .terminal-body {
+        padding: 15px;
+        font-size: 16px;
+    }
+
+    .ls-row {
+        grid-template-columns: 90px 25px 45px 45px 50px 60px 1fr;
+        font-size: 12px;
+        gap: 5px;
+    }
+
+    .project-cards {
+        grid-template-columns: 1fr;
+    }
+
+    .skills-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .prompt-context {
+        font-size: 12px;
+    }
+}
