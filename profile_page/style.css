@@ -176,6 +176,10 @@ body {
     color: #8b0000;
     font-weight: bold;
 }
+.prompt-context .pwd {
+    color: blue;
+    font-weight: bold;
+}
 
 .cmd {
     font-family: 'OSTF';
@@ -205,10 +209,10 @@ body {
 .terminal-input {
     display: flex;
     align-items: center;
-    margin: 10px;
     padding: 10px;
-    border: 1px solid #1793d1;
     border-radius: 4px;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(15px);
     color: #00ff00;
     font-size: 16px;
     cursor: text;
