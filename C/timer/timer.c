@@ -124,14 +124,21 @@ const char *digits[11][5] = {
 //     },
 // };
 
+void print_digit(int num) {
+    for (int i = 0; i < 5; i++) {
+        printf("%s\n", digits[num][i]);
+    }
+}
+
 int main() {
     struct winsize w;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
     printf("Width: %d\n", w.ws_col);
     printf("Heigth: %d\n", w.ws_row);
 
-    for (int i = 0; i < 11; i++) {
-        printf("%s\n")
+    for(int i = 0; i < 11; i++) {
+        print_digit(i);
+        printf("\n");
     }
 
     printf("Hello, World!\n");
