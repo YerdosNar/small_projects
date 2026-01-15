@@ -133,13 +133,21 @@ void print_digit(int num) {
 int main() {
     struct winsize w;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-    printf("Width: %d\n", w.ws_col);
-    printf("Heigth: %d\n", w.ws_row);
+    int width = w.ws_col;
+    int height = w.ws_row;
+    int x_pixel = w.ws_xpixel;
+    int y_pixel = w.ws_ypixel;
 
-    for(int i = 0; i < 11; i++) {
-        print_digit(i);
-        printf("\n");
-    }
+    int minutes, seconds;
+    printf("Enter minutes: ");
+    scanf("%d", &minutes);
+    printf("Enter seconds: ");
+    scanf("%d", &seconds);
+
+    // for(int i = 0; i < 11; i++) {
+    //     print_digit(i);
+    //     printf("\n");
+    // }
 
     printf("Hello, World!\n");
 
