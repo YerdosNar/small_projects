@@ -6,115 +6,195 @@
 #include <unistd.h>
 
 #define RED   "\033[31m"
-#define B_RED "\033[41m"
 #define GRN   "\033[32m"
-#define B_GRN "\033[42m"
 #define YEL   "\033[33m"
-#define B_YEL "\033[43m"
 #define BLU   "\033[34m"
+
+#define B_RED "\033[41m"
+#define B_GRN "\033[42m"
+#define B_YEL "\033[43m"
 #define B_BLU "\033[44m"
+
 #define BLD   "\033[1m"
 #define NOC   "\033[0m"
 
-const char *digits[11][5] = {
+#define HIDE_CURSOR "\033[?25l"
+#define SHOW_CURSOR "\033[?25h"
+
+int width, height;
+
+const char *digits[11][7] = {
     // 0
     {
-        "  ###  ",
-        " #   # ",
-        " #   # ",
-        " #   # ",
-        "  ###  "
+        "  ######  ",
+        " ##     ##",
+        " ##     ##",
+        " ##     ##",
+        " ##     ##",
+        " ##     ##",
+        "  ######  "
     },
     // 1
     {
-        "   #   ",
-        "  ##   ",
-        "   #   ",
-        "   #   ",
-        "  ###  "
+        "    ##   ",
+        "  ####   ",
+        "    ##   ",
+        "    ##   ",
+        "    ##   ",
+        "    ##   ",
+        "  ###### "
     },
     // 2
     {
-        "  ###  ",
-        " #   # ",
-        "    #  ",
-        "   #   ",
-        " ##### "
+        "  ######  ",
+        " ##     ##",
+        "        ##",
+        "   #####  ",
+        " ##       ",
+        " ##       ",
+        " ######## "
     },
     // 3
     {
-        "  ###  ",
-        " #   # ",
-        "   ##  ",
-        " #   # ",
-        "  ###  "
+        "  ######  ",
+        " ##     ##",
+        "        ##",
+        "   #####  ",
+        "        ##",
+        " ##     ##",
+        "  #######  "
     },
     // 4
     {
-        "   #   ",
-        "  ##   ",
-        " # #   ",
-        " ##### ",
-        "   #   "
+        " ##    ## ",
+        " ##    ## ",
+        " ##    ## ",
+        " ######## ",
+        "       ## ",
+        "       ## ",
+        "       ## "
     },
     // 5
     {
-        " ##### ",
-        " #     ",
-        " ##### ",
-        "     # ",
-        " ##### "
+        " ######## ",
+        " ##       ",
+        " ##       ",
+        " #######  ",
+        "        ##",
+        " ##     ##",
+        "  ######   "
     },
     // 6
     {
-        "  ###  ",
-        " #     ",
-        " ####  ",
-        " #   # ",
-        "  ###  "
+        "  #####   ",
+        " ##       ",
+        " ##       ",
+        " #######  ",
+        " ##     ##",
+        " ##     ##",
+        "  #####  "
     },
     // 7
     {
-        " ##### ",
-        "     # ",
-        "    #  ",
-        "   #   ",
-        "   #   "
+        " ######## ",
+        "       ## ",
+        "      ##  ",
+        "     ##   ",
+        "    ##    ",
+        "   ##     ",
+        "   ##     "
     },
     // 8
     {
-        "  ###  ",
-        " #   # ",
-        "  ###  ",
-        " #   # ",
-        "  ###  "
+        "  ######  ",
+        " ##     ##",
+        " ##     ##",
+        "  ######  ",
+        " ##     ##",
+        " ##     ##",
+        "  ####### "
     },
     // 9
     {
-        "  ###  ",
-        " #   # ",
-        "  #### ",
-        "     # ",
-        "  ###  "
+        "  ######  ",
+        " ##     ##",
+        " ##     ##",
+        "  ####### ",
+        "        ##",
+        "        ##",
+        "  ######   "
     },
-    // : (Colon - Index 10)
+    // :
     {
-        "       ",
-        "   ##  ",
-        "       ",
-        "   ##  ",
-        "       "
+        "          ",
+        "    ##    ",
+        "    ##    ",
+        "          ",
+        "    ##    ",
+        "    ##    ",
+        "          "
     }
 };
 
-const char time_up[5][47] = {
-    "##### ##### #   # #####       #   # ####    #",
-    "  #     #   ## ## #           #   # #   #   #",
-    "  #     #   # # # #####       #   # ####    #",
-    "  #     #   #   # #           #   # #        ",
-    "  #   ##### #   # #####        ###  #       #"
+const char time_up[6][53] = {
+    "####### ##### #     # #######       #    # ####    #",
+    "   #      #   ##   ## #             #    # #   #   #",
+    "   #      #   # # # # ####          #    # #   #   #",
+    "   #      #   #  #  # ####          #    # ####    #",
+    "   #      #   #     # #             #    # #        ",
+    "   #    ##### #     # #######        ####  #       #"
 };
 
+void print_digit(int num, int x_pos, int y_pos) {
+    system("clear");
+    printf(HIDE_CURSOR);
+    printf("\033[%d;%dH", y_pos, x_pos);
+    for(int i = 0; i < 7; i++) {
+        printf("\033[%d;%dH", y_pos + i, x_pos);
+        printf("%s", digits[num][i]);
+    }
+}
+
+void print_big_timer(int hours, int minutes, int seconds) {
+    int total = hours * 3600 + minutes * 60 + seconds;
+    int x_pos = (width - 8 * 10) / 2;
+    int y_pos = (height - 7) / 2;
+    while (total >= 0) {
+        int first_h = hours / 10;
+        int second_h = hours % 10;
+        int first_m = minutes / 10;
+        int second_m = minutes % 10;
+        int first_s = seconds / 10;
+        int second_s = seconds % 10;
+        printf(RED);
+        print_digit(first_h, x_pos, y_pos);
+        print_digit(second_h, x_pos + 11, y_pos);
+        printf(NOC);
+        print_digit(10, x_pos + 22, y_pos);
+        printf(GRN);
+        print_digit(first_m, x_pos + 33, y_pos);
+        print_digit(second_m, x_pos + 44, y_pos);
+        printf(NOC);
+        print_digit(10, x_pos + 55, y_pos);
+        printf(BLU);
+        print_digit(first_s, x_pos + 66, y_pos);
+        print_digit(second_s, x_pos + 77, y_pos);
+        printf(NOC);
+        fflush(stdout);
+
+        total--;
+        seconds--;
+        if (seconds < 0) {
+            seconds = 59;
+            minutes--;
+            if (minutes < 0) {
+                minutes = 59;
+                hours--;
+            }
+        }
+        sleep(1);
+    }
+}
 
 void print_small_timer(int hours, int minutes, int seconds) {
     int total = hours * 3600 + minutes * 60 + seconds;
@@ -152,66 +232,22 @@ void print_small_timer(int hours, int minutes, int seconds) {
     }
 }
 
-void print_big_timer(int hours, int minutes, int seconds, int height, int width) {
-    int total = hours * 3600 + minutes * 60 + seconds;
-    int y_pos = (height - 5) / 2;
-    int x_pos = (width - 5 * 8) / 2;
-    system("clear");
-
-    while(total >= 0) {
-        printf("\033[%d;%dH", y_pos, x_pos);
-        total--;
-        printf("Hello\n");
-    }
-
-    system("clear");
-    int red = 0;
-    while(1) {
-        printf("\033[%d;%dH", y_pos, x_pos);
-        if (red) {
-            for(int i = 0; i < 5; i++) {
-                printf("\033[%d;%dH", y_pos+i, x_pos);
-                printf(BLD B_RED BLU "%s\n", time_up[i]);
-                red = 0;
-            }
-        }
-        else {
-            for(int i = 0; i < 5; i++) {
-                printf("\033[%d;%dH", y_pos+i, x_pos);
-                printf(BLD B_BLU RED "%s\n", time_up[i]);
-                red = 1;
-            }
-        }
-        fflush(stdout);
-        sleep(1);
-    }
-
-}
-
-void print_digit(int num) {
-    for (int i = 0; i < 5; i++) {
-        printf("%s\n", digits[num][i]);
-    }
-}
 void usage(char *exe) {
     printf("Usage: %s [options]\n", exe);
     printf("Options: \n");
-    printf("  -h,--hours <number>         to set hours\n");
-    printf("  -m,--minutes <number>       to set minutes\n");
-    printf("  -s,--seconds <number>       to set seconds\n");
+    printf("  -h, --hours   <number>       to set hours\n");
+    printf("  -m, --minutes <number>       to set minutes\n");
+    printf("  -s, --seconds <number>       to set seconds\n");
+    printf("  -n, --no-big                 use small text mode\n");
     printf("Example:\n");
     printf("  %s -h 1 -m 10 -s 20\n", exe);
     exit(0);
 }
 
 void signal_handler(int sig) {
-    printf("\n=> Bye");
-    for (int i = 0; i < 3; i++) {
-        sleep(1);
-        printf(".");
-        fflush(stdout);
-    }
+    printf(SHOW_CURSOR);
     printf("\n");
+    system("stty echo");
     exit(sig);
 }
 
@@ -219,10 +255,8 @@ int main(int argc, char **argv) {
     signal(SIGINT, signal_handler);
     struct winsize w;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-    int width = w.ws_col;
-    int height = w.ws_row;
-    // int x_pixel = w.ws_xpixel;
-    // int y_pixel = w.ws_ypixel;
+    width = w.ws_col;
+    height = w.ws_row;
 
     int hours = 0,
     minutes = 0,
@@ -301,7 +335,7 @@ int main(int argc, char **argv) {
         return 0;
     }
     if (set_big_timer) {
-        print_big_timer(hours, minutes, seconds, height, width);
+        print_big_timer(hours, minutes, seconds);
     }
     else {
         print_small_timer(hours, minutes, seconds);
