@@ -166,6 +166,7 @@ void print_big_timer(int hours, int minutes, int seconds) {
         int second_m = minutes % 10;
         int first_s = seconds / 10;
         int second_s = seconds % 10;
+        printf("%d%d:%d%d:%d%d\n", first_h, second_h, first_m, second_m, first_s, second_s);
         printf(RED);
         print_digit(first_h, x_pos, y_pos);
         print_digit(second_h, x_pos + 11, y_pos);
@@ -194,6 +195,8 @@ void print_big_timer(int hours, int minutes, int seconds) {
         }
         sleep(1);
     }
+    printf("\n");
+    printf(SHOW_CURSOR);
 }
 
 void print_small_timer(int hours, int minutes, int seconds) {
@@ -259,8 +262,8 @@ int main(int argc, char **argv) {
     height = w.ws_row;
 
     int hours = 0,
-    minutes = 0,
-    seconds = 0;
+        minutes = 0,
+        seconds = 0;
     int set_big_timer = 1;
 
     if (argc < 2) {
