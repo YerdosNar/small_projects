@@ -146,7 +146,7 @@ const char time_up[6][53] = {
 };
 
 void print_digit(int num, int x_pos, int y_pos) {
-    system("clear");
+    // system("clear");
     printf(HIDE_CURSOR);
     printf("\033[%d;%dH", y_pos, x_pos);
     for(int i = 0; i < 7; i++) {
@@ -155,7 +155,32 @@ void print_digit(int num, int x_pos, int y_pos) {
     }
 }
 
+void print_time_up() {
+    int x_pos = (width - sizeof(time_up[0])) / 2;
+    int y_pos = (height - 6) / 2;
+    int red = 0;
+    while(1) {
+        if (red) {
+            for (int i = 0; i < 6; i++) {
+                printf("\033[%d;%dH", y_pos+i, x_pos);
+                printf(B_RED "%s\n", time_up[i]);
+            }
+            red = 0;
+        }
+        else {
+            for (int i = 0; i < 6; i++) {
+                printf("\033[%d;%dH", y_pos+i, x_pos);
+                printf(BLU BLD "%s\n", time_up[i]);
+            }
+            red = 1;
+        }
+        sleep(1);
+        printf(NOC);
+    }
+}
+
 void print_big_timer(int hours, int minutes, int seconds) {
+    system("clear");
     int total = hours * 3600 + minutes * 60 + seconds;
     int x_pos = (width - 8 * 10) / 2;
     int y_pos = (height - 7) / 2;
@@ -166,7 +191,7 @@ void print_big_timer(int hours, int minutes, int seconds) {
         int second_m = minutes % 10;
         int first_s = seconds / 10;
         int second_s = seconds % 10;
-        printf("%d%d:%d%d:%d%d\n", first_h, second_h, first_m, second_m, first_s, second_s);
+        // printf("%d%d:%d%d:%d%d\n", first_h, second_h, first_m, second_m, first_s, second_s);
         printf(RED);
         print_digit(first_h, x_pos, y_pos);
         print_digit(second_h, x_pos + 11, y_pos);
@@ -195,6 +220,8 @@ void print_big_timer(int hours, int minutes, int seconds) {
         }
         sleep(1);
     }
+    system("clear");
+    print_time_up();
     printf("\n");
     printf(SHOW_CURSOR);
 }
@@ -262,8 +289,8 @@ int main(int argc, char **argv) {
     height = w.ws_row;
 
     int hours = 0,
-        minutes = 0,
-        seconds = 0;
+    minutes = 0,
+    seconds = 0;
     int set_big_timer = 1;
 
     if (argc < 2) {
