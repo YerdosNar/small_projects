@@ -45,8 +45,8 @@ public class Generate {
         boolean write = false;
 
         for (int i = 0; i < args.length; i++) {
-            if (args[i].equals("-l") ||
-                args[i].equals("--length") &&
+            if ((args[i].equals("-l") ||
+                args[i].equals("--length")) &&
                 i + 1 < args.length)
             {
                 try {
