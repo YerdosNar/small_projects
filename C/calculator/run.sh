@@ -3,3 +3,5 @@
 gcc calculator.c
 
 ./a.out
+
+rm a.out
