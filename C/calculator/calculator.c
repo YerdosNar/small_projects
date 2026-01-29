@@ -2,18 +2,18 @@
 #include <stdlib.h>
 #include <string.h>
 
-float evaluate(char *num1, char operand, char *num2) {
+float evaluate(float num1, char operand, float num2) {
     if(operand == '*') {
-        return atof(num1) * atof(num2);
+        return num1 * num2;
     }
     else if(operand == '/') {
-        return atof(num1) / atof(num2);
+        return num1 / num2;
     }
     else if(operand == '+') {
-        return atof(num1) + atof(num2);
+        return num1 + num2;
     }
     else {
-        return atof(num1) - atof(num2);
+        return num1 - num2;
     }
 }
 
@@ -31,14 +31,18 @@ int main() {
         token = strtok(NULL, " ");
     }
 
-    float result;
+    // 123 + 123 + 123
+    float result = 0.0f;
     for (int j = 0; j < i; j++) {
         if(!strncmp(tokens[j], "*", 1)
         || !strncmp(tokens[j], "/", 1)
         || !strncmp(tokens[j], "+", 1)
         || !strncmp(tokens[j], "-", 1))
         {
-            result = evaluate(tokens[j-1], tokens[j][0], tokens[j+1]);
+            if (j == 1) {
+                result += atof(tokens[j-1]);
+            }
+            result = evaluate(result, tokens[j][0], atof(tokens[j+1]));
         }
     }
 
