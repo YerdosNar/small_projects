@@ -18,7 +18,7 @@ else
     javac $filename
     java $exe_name
 
-    rm $exe_name
+    rm ${exe_name}.class
 fi
 echo ""
 echo "=========================="
