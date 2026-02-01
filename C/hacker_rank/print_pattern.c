@@ -10,7 +10,7 @@ int main() {
             int min_i = i < border-1-i ? i : border-1-i;
             int min_j = j < border-1-j ? j : border-1-j;
             int min_dis = min_i < min_j ? min_i : min_j;
-            printf("%-2d ", n - min_dis);
+            printf("%d ", n - min_dis);
         }
         printf("\n");
     }
