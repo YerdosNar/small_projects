@@ -20,4 +20,8 @@ else
 
     rm $exe_name
 fi
-echo "Done!"
+echo ""
+echo "=========================="
+echo "       +-------+"
+echo "       | Done! |"
+echo "       +-------+"
