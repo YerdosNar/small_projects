@@ -8,6 +8,9 @@ if [ $# -eq 0 ]; then
     echo "|          ./run.sh main.c   |"
     echo "+----------------------------+"
     exit
+elif [[ "$1" == "-c" || "$1" == "--clean" ]]; then
+    echo -e "\033[1;31mCLEANING...\033[0m"
+    rm *.class
 fi
 
 filename=$1
