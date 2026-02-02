@@ -2,7 +2,8 @@
 
 if [ $# -eq 0 ]; then
     echo "+--------------------------------------+"
-    echo "| Usage: ./run.sh <filename>           |"
+    echo "| Usage:                               |"
+    echo "|        ./run.sh <filename>           |"
     echo "+--------------------------------------+"
     echo "| Options:                             |"
     echo "|     -c/--clean Clean all .class files|"
@@ -35,6 +36,7 @@ else
 
     rm ${exe_name}.class
 fi
+
 echo ""
 echo "=========================="
 echo "       +-------+"
