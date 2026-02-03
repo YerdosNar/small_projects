@@ -24,24 +24,24 @@ struct document {
     int paragraph_count;//denotes number of paragraphs in a document
 };
 struct document get_document(char* text) {
-    struct paragraph *paragraphs = malloc(sizeof(struct paragraph));
-
     // save pointers for strtok_r
     char *save_p, *save_s, *save_w;
 
+    struct paragraph *paragraphs = malloc(sizeof(struct paragraph));
+
     char *p = strtok_r(text, "\n", &save_p);
     int p_num = 0;
-    while(p != NULL) {
+    while(p) {
         struct sentence *sentences = malloc(sizeof(struct sentence));
 
         char *s = strtok_r(p, ".", &save_s);
         int s_num = 0;
-        while(s != NULL) {
+        while(s) {
             struct word *words = malloc(sizeof(struct word));
 
             char *w = strtok_r(s, " ", &save_w);
             int w_num = 0;
-            while(w != NULL) {
+            while(w) {
                 words[w_num++].data = w;
                 w = strtok_r(NULL, " ", &save_w);
                 struct word *new_w_ptr = realloc(words, sizeof(struct word) * (w_num+1));

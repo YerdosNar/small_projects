@@ -16,10 +16,11 @@ if [[ -f "$exe_name" && "$exe_name" -nt "$filename" ]];then
     echo "Skipping compilation, file already compiled"
 else
     gcc -o $exe_name $filename -Wall -Wextra -lm
-    ./$exe_name
-
-    rm $exe_name
 fi
+
+./$exe_name
+rm $exe_name
+
 echo ""
 echo "=========================="
 echo "       +-------+"
