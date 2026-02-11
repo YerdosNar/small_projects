@@ -3,6 +3,6 @@
 if [[ "$1" == "-c" || "$1" == "--clean" ]]; then
     rm exe_*
 else
-    gcc -o exe_sender sender.c
-    gcc -o exe_receiver receiver.c
+    gcc -Wall -Wextra -o exe_sender sender.c
+    gcc -Wall -Wextra -o exe_receiver receiver.c
 fi

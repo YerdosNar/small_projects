@@ -50,10 +50,11 @@ void err(const char *msg, ...) {
 int main(void) {
     info("Creating server socket");
     int server_socket;
-    if((server_socket=socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-        err("Socket creation failed");
-    }
+    if((server_socket=socket(AF_INET, SOCK_STREAM, 0)) < 0) { err("Socket creation failed");}
     success("Socket created successfully");
+
+    int opt = 1;
+    setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
     info("Bind started");
     struct sockaddr_in server_address = {
@@ -74,26 +75,24 @@ int main(void) {
     success("Connection established with client!");
 
     // Receive metadat of the file
-    char metadata[1024] = {0}; // filename + "|" + unsigned long
-    ssize_t bytes_received;
-    if((bytes_received=recv(client_socket, metadata, sizeof(metadata)-1, 0)) < 0) {
-        err("Receive failed");
-    }
-    metadata[bytes_received] = '\0';
-    info("Received metadata: %s\n", metadata);
+    char metadata[256]; // filename + "|" + unsigned long
+    ssize_t metadata_bytes;
+    if((metadata_bytes=recv(client_socket, metadata, sizeof(metadata), MSG_WAITALL)) < 0) { err("Receive failed");}
+    if(metadata_bytes != sizeof(metadata)) {err("Incomplete metadata");}
 
-    printf("metadata size: %lu\n", strlen(metadata));
-    for(int i = 0; i < strlen(metadata); i++) {
-        printf("%d, ", metadata[i]);
-    }
+    success("Received metadata: %s", metadata);
 
+    info("Parse filename");
     char *filename = strtok(metadata, "|");
     if(!filename) {err("Failed to parse filename");}
+    success("Filename: %s", filename);
+    info("Parse filesize");
     char *size_str = strtok(NULL, "|");
     if(!size_str) {err("Failed to parse filesize");}
+    success("Filesize: %s", size_str);
 
     unsigned long filesize = strtoul(size_str, NULL, 10);
-    info("Receiving: %s (%lu bytes)", filesize, filesize);
+    info("Receiving: %s (%lu bytes)", filename, filesize);
 
     char output_fn[256];
     snprintf(output_fn, sizeof(output_fn), "recv_%s", filename);
@@ -103,6 +102,7 @@ int main(void) {
     char buffer[1024];
     unsigned long total_received = 0;
     int seq = 0;
+    ssize_t bytes_received;
     while((bytes_received=recv(client_socket, buffer, sizeof(buffer), 0)) > 0) {
         fwrite(buffer, bytes_received, 1, fp);
         total_received += bytes_received;

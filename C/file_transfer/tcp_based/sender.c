@@ -70,11 +70,11 @@ int main(int argc, char **argv) {
                 i++;
             }
             else if ((!strcmp("-f", argv[i]) || !strcmp("--filename", argv[i])) && i+1 < argc) {
-                strncpy(filename, argv[i+1], strlen(argv[i+1]));
+                strcpy(filename, argv[i+1]);
                 i++;
             }
             else if ((!strcmp("-i", argv[i]) || !strcmp("--ip", argv[i])) && i+1 < argc) {
-                strncpy(receiver_ip, argv[i+1], strlen(argv[i+1]));
+                strcpy(receiver_ip, argv[i+1]);
                 i++;
             }
         }
@@ -111,14 +111,11 @@ int main(int argc, char **argv) {
     rewind(fp);
 
     info("Sending metadata");
-    char metadata[135]; // filename + "|" + unsigned long = 135
-    snprintf(metadata, 127, "%s|%lu", filename, filesize);
+    char metadata[256] = {0}; // filename + "|" + unsigned long = 135
+    snprintf(metadata, sizeof(metadata), "%s|%lu", filename, filesize);
     ssize_t bytes_sent;
-    if((bytes_sent=send(network_socket, metadata, strlen(metadata), 0)) < 0) {
-        err("Failed to send data");
-    }
+    if((bytes_sent=send(network_socket, metadata, sizeof(metadata), 0)) < 0) { err("Failed to send data");}
     success("MetaData sent successfully");
-    sleep(1);
 
     int seq = 1;
     unsigned long total_sent = 0;
