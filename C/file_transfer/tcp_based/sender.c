@@ -190,14 +190,18 @@ void send_file(int network_socket, char *filename) {
     unsigned long total_sent = 0;
     char buffer[BUFFER_SIZE];
     size_t bytes_read;
+    int last_percent = -1;
     while((bytes_read=fread(buffer, 1, sizeof(buffer), fp)) > 0) {
         if((bytes_sent=send(network_socket, buffer, bytes_read, 0)) < 0) {
             err("Failed to send data");
         }
         total_sent += bytes_sent;
-        float percentage = (float)total_sent * 100.0 / filesize;
-        printf("\r[+] Seq: %d | Sent: %lu/%lu -> %.2f%%", seq++, total_sent, filesize, percentage);
-        fflush(stdout);
+        int curr_percentage = total_sent * 100 / filesize;
+        if (curr_percentage > last_percent) {
+            printf("\r[+] Seq: %d | Sent: %lu/%lu -> %d%%", seq++, total_sent, filesize, curr_percentage);
+            fflush(stdout);
+            last_percent = curr_percentage;
+        }
     }
     printf("\n");
 
