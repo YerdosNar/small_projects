@@ -1,50 +1,83 @@
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <asm-generic/errno.h>
+#include <errno.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <string.h>
 #include <unistd.h>
 
-#define RED "\033[31m"
-#define GRN "\033[32m"
-#define YEL "\033[33m"
-#define BLU "\033[34m"
-#define NOC "\033[0m"
+// Custom logging
+#include "logger.h"
 
-void info(const char *msg, ...) {
-    va_list args;
-    va_start(args, msg);
-    printf(BLU "[i]" NOC " ");
-    vprintf(msg, args);
-    printf("\n");
-    va_end(args);
-}
-void warn(const char *msg, ...) {
-    va_list args;
-    va_start(args, msg);
-    printf(YEL "[!]" NOC " ");
-    vprintf(msg, args);
-    printf("\n");
-    va_end(args);
-}
-void success(const char *msg, ...) {
-    va_list args;
-    va_start(args, msg);
-    printf(GRN "[✓]" NOC " ");
-    vprintf(msg, args);
-    printf("\n");
-    va_end(args);
-}
-void err(const char *msg, ...) {
-    va_list args;
-    va_start(args, msg);
-    printf(RED "[x]" NOC " ");
-    vprintf(msg, args);
-    printf("\n");
-    va_end(args);
+int punch_hole_connect(char *vps_ip, int vps_port) {
+    int sock;
+    int opt = 1;
 
-    exit(1);
+    struct sockaddr_in local_addr = {
+        .sin_family = AF_INET,
+        .sin_port = htons(9999),
+        .sin_addr.s_addr = INADDR_ANY
+    };
+
+    info("Connecting to VPS to register...");
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    if(bind(sock, (struct sockaddr *) &local_addr, sizeof(local_addr)) < 0) {
+        err("Bind failed");
+    }
+
+    struct sockaddr_in vps_addr = {
+        .sin_family = AF_INET,
+        .sin_port = htons(vps_port),
+    };
+    inet_pton(AF_INET, vps_ip, &vps_addr.sin_addr);
+
+    if(connect(sock, (struct sockaddr *) &vps_addr, sizeof(vps_addr)) < 0) {
+        err("Failed to connect to VPS");
+    }
+    success("Connected to VPS");
+
+    info("Receiving peer info");
+    struct sockaddr_in peer_addr;
+    if(recv(sock, &peer_addr, sizeof(peer_addr), 0) <= 0) {
+        err("Failed to receive peer info");
+    }
+    success("VPS says Peer is at %s:%d", inet_ntoa(peer_addr.sin_addr), ntohs(peer_addr.sin_port));
+
+    // Close VPS
+    close(sock);
+
+    info("Initiating hole punching");
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+
+    // BIND to the same local port(9999)
+    // Re-opens the exact same mapping router just created
+    if(bind(sock, (struct sockaddr *) &local_addr, sizeof(local_addr)) < 0) {
+        err("Bind failed");
+    }
+
+    int tries = 0;
+    while(tries < 10) {
+        info("\rAttempt punch: %d", tries);
+
+        int res;
+        if((res=connect(sock, (struct sockaddr*)&peer_addr, sizeof(peer_addr))) == 0) {
+            success("HOLE PUNCH SUCCESSFUL! Connect to peer");
+            return sock;
+        }
+
+        if(errno == ECONNREFUSED || errno == ETIMEDOUT || errno == EINPROGRESS) {
+            usleep(500000);
+            tries++;
+        }
+        else {
+            err("Fatal during punch");
+            return -1;
+        }
+    }
+
+    warn("Hole punch timed out...");
+    return -1;
 }
 
 int main(int argc, char **argv) {

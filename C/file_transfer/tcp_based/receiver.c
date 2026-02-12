@@ -1,51 +1,10 @@
 #include <netinet/in.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
-#define RED "\033[31m"
-#define GRN "\033[32m"
-#define YEL "\033[33m"
-#define BLU "\033[34m"
-#define NOC "\033[0m"
-
-void info(const char *msg, ...) {
-    va_list args;
-    va_start(args, msg);
-    printf(BLU "[i]" NOC " ");
-    vprintf(msg, args);
-    printf("\n");
-    va_end(args);
-}
-void warn(const char *msg, ...) {
-    va_list args;
-    va_start(args, msg);
-    printf(YEL "[!]" NOC " ");
-    vprintf(msg, args);
-    printf("\n");
-    va_end(args);
-}
-void success(const char *msg, ...) {
-    va_list args;
-    va_start(args, msg);
-    printf(GRN "[✓]" NOC " ");
-    vprintf(msg, args);
-    printf("\n");
-    va_end(args);
-}
-void err(const char *msg, ...) {
-    va_list args;
-    va_start(args, msg);
-    printf(RED "[x]" NOC " ");
-    vprintf(msg, args);
-    printf("\n");
-    va_end(args);
-
-    exit(1);
-}
+// Custom logger
+#include "logger.h"
 
 int main(void) {
     info("Creating server socket");
