@@ -9,36 +9,13 @@
 #include <fcntl.h>
 #include <poll.h>
 
-// To draw progress bar
-#include <sys/ioctl.h>
-
 // Custom logging
 #include "logger.h"
 
-#define BUFFER_SIZE 1024 * 64 // Let's make 64KB buffer
+#define BUFFER_SIZE 65536
 #define LOCAL_PORT 9999
 #define MODE_DIRECT 0
 #define MODE_PUNCH  1
-
-void print_progress_bar(int percentage) {
-    struct winsize w;
-    ioctl(0, TIOCGWINSZ, &w);
-
-    int cols = w.ws_col;
-    int bar_width = cols - 8; // cols - [] - 100%
-    int fill_bar = percentage * 100 / bar_width;
-    printf("\r[");
-    for(int i = 0; i < bar_width; i++) {
-        if(i < fill_bar) {
-            printf(B_GRN);
-        }
-        else {
-            printf(" ");
-        }
-    }
-    printf("] %d%%", percentage);
-    fflush(stdout);
-}
 
 int punch_hole_connect(char *vps_ip, int vps_port) {
     int sock;

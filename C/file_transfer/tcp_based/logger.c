@@ -35,3 +35,24 @@ void err(const char *msg, ...) {
     exit(1);
 }
 
+void print_progress_bar(int percentage) {
+    struct winsize w;
+    ioctl(0, TIOCGWINSZ, &w);
+
+    int cols = w.ws_col;
+    int bar_width = cols - 8; // cols - [] - 100%
+    int fill_bar = percentage * bar_width / 100;
+
+    printf("\r[");
+    for(int i = 0; i < bar_width; i++) {
+        if(i < fill_bar) {
+            printf(B_GRN " ");
+        }
+        else {
+            printf(NOC " ");
+        }
+    }
+    printf("] %3d%%", percentage);
+    fflush(stdout);
+}
+

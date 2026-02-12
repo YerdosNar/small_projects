@@ -201,12 +201,17 @@ void receive_file(int client_socket) {
     unsigned long total_received = 0;
     int seq = 0;
     ssize_t bytes_received;
+    int last_percent = -1;
     while((bytes_received=recv(client_socket, buffer, sizeof(buffer), 0)) > 0) {
         fwrite(buffer, bytes_received, 1, fp);
         total_received += bytes_received;
-        float percentage = (float)total_received * 100.0 / filesize;
-        printf("\r[+] Seq: %d, Recv: %lu/%lu -> %.2f", seq++, total_received, filesize, percentage);
-        fflush(stdout);
+        int curr_percent = total_received * 100 / filesize;
+        // printf("\r[+] Seq: %d, Recv: %lu/%lu -> %.2f", seq++, total_received, filesize, percentage);
+        // fflush(stdout);
+        if(curr_percent > last_percent) {
+            print_progress_bar(curr_percent);
+            last_percent = curr_percent;
+        }
 
         if(total_received >= filesize) break;
     }

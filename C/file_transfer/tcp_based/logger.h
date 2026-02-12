@@ -2,6 +2,9 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
+// To draw progress bar
+#include <sys/ioctl.h>
+
 #ifndef LOGGER_H
 #define LOGGER_H
 
@@ -20,5 +23,6 @@ void info(const char *msg, ...);
 void warn(const char *msg, ...);
 void success(const char *msg, ...);
 void err(const char *msg, ...);
+void print_progress_bar(int percent);
 
 #endif
