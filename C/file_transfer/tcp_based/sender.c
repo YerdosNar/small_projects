@@ -2,19 +2,43 @@
 #include <errno.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <fcntl.h>
 #include <poll.h>
 
+// To draw progress bar
+#include <sys/ioctl.h>
+
 // Custom logging
 #include "logger.h"
 
-#define BUFFER_SIZE 65536 // Let's make 64KB buffer
+#define BUFFER_SIZE 1024 * 64 // Let's make 64KB buffer
 #define LOCAL_PORT 9999
 #define MODE_DIRECT 0
 #define MODE_PUNCH  1
+
+void print_progress_bar(int percentage) {
+    struct winsize w;
+    ioctl(0, TIOCGWINSZ, &w);
+
+    int cols = w.ws_col;
+    int bar_width = cols - 8; // cols - [] - 100%
+    int fill_bar = percentage * 100 / bar_width;
+    printf("\r[");
+    for(int i = 0; i < bar_width; i++) {
+        if(i < fill_bar) {
+            printf(B_GRN);
+        }
+        else {
+            printf(" ");
+        }
+    }
+    printf("] %d%%", percentage);
+    fflush(stdout);
+}
 
 int punch_hole_connect(char *vps_ip, int vps_port) {
     int sock;
@@ -198,8 +222,9 @@ void send_file(int network_socket, char *filename) {
         total_sent += bytes_sent;
         int curr_percentage = total_sent * 100 / filesize;
         if (curr_percentage > last_percent) {
-            printf("\r[+] Seq: %d | Sent: %lu/%lu -> %d%%", seq++, total_sent, filesize, curr_percentage);
-            fflush(stdout);
+            // printf("\r[+] Seq: %d | Sent: %lu/%lu -> %d%%", seq++, total_sent, filesize, curr_percentage);
+            // fflush(stdout);
+            print_progress_bar(curr_percentage);
             last_percent = curr_percentage;
         }
     }

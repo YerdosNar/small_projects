@@ -9,6 +9,11 @@
 #define GRN "\033[32m"
 #define YEL "\033[33m"
 #define BLU "\033[34m"
+
+#define B_RED "\033[41m"
+#define B_GRN "\033[42m"
+#define B_YEL "\033[43m"
+#define B_BLU "\033[44m"
 #define NOC "\033[0m"
 
 void info(const char *msg, ...);
