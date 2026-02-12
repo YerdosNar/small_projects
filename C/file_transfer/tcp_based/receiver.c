@@ -11,7 +11,7 @@
 // Custom logger
 #include "logger.h"
 
-#define BUFFER_SIZE 1024 * 64
+#define BUFFER_SIZE 65536
 #define LOCAL_PORT 9998
 #define MODE_DIRECT 0
 #define MODE_PUNCH  1
