@@ -3,7 +3,7 @@
 if [[ "$1" == "-c" || "$1" == "--clean" ]]; then
     rm exe_*
 else
-    gcc -Wall -Wextra logger.c -o exe_sender sender.c
-    gcc -Wall -Wextra logger.c -o exe_receiver receiver.c
-    gcc -Wall -Wextra logger.c -o exe_rendezvous rendezvous.c
+    gcc -Wall -Wextra -O3 logger.c -o exe_sender sender.c
+    gcc -Wall -Wextra -O3 logger.c -o exe_receiver receiver.c
+    gcc -Wall -Wextra -O3 logger.c -o exe_rendezvous rendezvous.c
 fi

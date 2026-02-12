@@ -11,6 +11,7 @@
 // Custom logger
 #include "logger.h"
 
+#define BUFFER_SIZE 1024 * 64
 #define LOCAL_PORT 9998
 #define MODE_DIRECT 0
 #define MODE_PUNCH  1
@@ -196,7 +197,7 @@ void receive_file(int client_socket) {
     FILE *fp = fopen(output_fn, "wb");
     if(!fp) { err("Could not open %s", output_fn); }
 
-    char buffer[1024];
+    char buffer[BUFFER_SIZE];
     unsigned long total_received = 0;
     int seq = 0;
     ssize_t bytes_received;

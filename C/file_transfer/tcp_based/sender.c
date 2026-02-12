@@ -11,6 +11,7 @@
 // Custom logging
 #include "logger.h"
 
+#define BUFFER_SIZE 1024 * 64 // Let's make 64KB buffer
 #define LOCAL_PORT 9999
 #define MODE_DIRECT 0
 #define MODE_PUNCH  1
@@ -84,7 +85,7 @@ int punch_hole_connect(char *vps_ip, int vps_port) {
     int tries = 0;
     int result_sock = -1;
 
-    while(tries < 20 && result_sock < 0) {
+    while(tries < 50 && result_sock < 0) {
         info("Attempt %d: trying listen + connect...", tries);
 
         // Try to accept
@@ -175,11 +176,11 @@ void send_file(int network_socket, char *filename) {
 
     info("Sending metadata");
     char metadata[256] = {0}; // filename + "|" + unsigned long = 135
-    
+
     // Extract just the filename from path
     char *base_filename = strrchr(filename, '/');
     base_filename = base_filename ? base_filename + 1 : filename;
-    
+
     snprintf(metadata, sizeof(metadata), "%s|%lu", base_filename, filesize);
     ssize_t bytes_sent;
     if((bytes_sent=send(network_socket, metadata, sizeof(metadata), 0)) < 0) { err("Failed to send data");}
@@ -187,7 +188,7 @@ void send_file(int network_socket, char *filename) {
 
     int seq = 1;
     unsigned long total_sent = 0;
-    char buffer[1024];
+    char buffer[BUFFER_SIZE];
     size_t bytes_read;
     while((bytes_read=fread(buffer, 1, sizeof(buffer), fp)) > 0) {
         if((bytes_sent=send(network_socket, buffer, bytes_read, 0)) < 0) {
