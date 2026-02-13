@@ -30,7 +30,6 @@ public class Send implements Runnable {
                 byte[] plaintext = message.getBytes("UTF-8");
 
                 byte[] ciphertext = crypto.encrypt(plaintext);
-                System.out.println("DEBUG: Cipher: "+ciphertext.length+", Plain: "+plaintext.length);
 
                 dOut.writeInt(ciphertext.length);
                 dOut.write(ciphertext);

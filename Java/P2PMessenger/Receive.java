@@ -26,7 +26,6 @@ public class Receive implements Runnable {
 
                 // Decrypt
                 byte[] plaintext = crypto.decrypt(encrypted);
-                System.out.println("DEBUG: Cipher: "+encrypted.length+" Plain: "+plaintext.length);
 
                 // Convert it to String and print
                 String message = new String(plaintext, "UTF-8");
