@@ -17,14 +17,11 @@ class App {
         this.timerInterval = null;
         
         // File transfer state
-        this.CHUNK_SIZE = 256 * 1024; // 256KB chunks for better performance
+        this.CHUNK_SIZE = 16 * 1024; // 16KB chunks
         this.receivedChunks = [];
         this.receivedSize = 0;
         this.expectedFileInfo = null;
         this.transferStartTime = null;
-        
-        // Buffer management
-        this.BUFFER_THRESHOLD = 512 * 1024; // 512KB buffer threshold
         
         // Initialize
         this.initializeEventListeners();
@@ -362,58 +359,46 @@ class App {
             };
             this.webrtc.sendMessage(fileInfo);
 
-            // Read file as array buffer for faster processing
-            const fileBuffer = await this.selectedFile.arrayBuffer();
-            const totalSize = fileBuffer.byteLength;
+            // Read and send file in chunks
+            const reader = new FileReader();
             let offset = 0;
             let sentSize = 0;
-            
-            const dataChannel = this.webrtc.dataChannel;
-            
-            // Set buffer threshold for flow control
-            dataChannel.bufferedAmountLowThreshold = this.BUFFER_THRESHOLD;
-            
-            const sendNextChunks = async () => {
-                while (offset < totalSize) {
-                    // Check buffer - wait if too full
-                    if (dataChannel.bufferedAmount > this.BUFFER_THRESHOLD * 2) {
-                        // Wait for buffer to drain
-                        await new Promise(resolve => {
-                            dataChannel.onbufferedamountlow = () => {
-                                dataChannel.onbufferedamountlow = null;
-                                resolve();
-                            };
-                        });
-                    }
-                    
-                    // Get chunk
-                    const end = Math.min(offset + this.CHUNK_SIZE, totalSize);
-                    const chunk = fileBuffer.slice(offset, end);
-                    
-                    // Encrypt and send
-                    const encryptedChunk = await this.crypto.encryptChunk(chunk);
-                    dataChannel.send(encryptedChunk);
-                    
-                    sentSize += chunk.byteLength;
-                    offset = end;
-                    
-                    // Update progress
-                    const progress = (sentSize / totalSize) * 100;
-                    this.updateProgress(progress, sentSize);
-                }
-                
-                // Wait for buffer to drain before sending completion
-                while (dataChannel.bufferedAmount > 0) {
-                    await new Promise(resolve => setTimeout(resolve, 50));
-                }
-                
-                // Send completion message
-                this.webrtc.sendMessage({ type: 'fileComplete' });
-                document.getElementById('transfer-status').textContent = 'File sent successfully!';
-                setTimeout(() => this.showComplete('File sent successfully!'), 500);
+
+            const readChunk = () => {
+                const slice = this.selectedFile.slice(offset, offset + this.CHUNK_SIZE);
+                reader.readAsArrayBuffer(slice);
             };
-            
-            sendNextChunks();
+
+            reader.onload = async (e) => {
+                const chunk = e.target.result;
+                
+                // Encrypt chunk
+                const encryptedChunk = await this.crypto.encryptChunk(chunk);
+                
+                // Send encrypted chunk
+                this.webrtc.send(encryptedChunk);
+                
+                sentSize += chunk.byteLength;
+                offset += chunk.byteLength;
+
+                // Update progress
+                const progress = (sentSize / this.selectedFile.size) * 100;
+                this.updateProgress(progress, sentSize);
+
+                if (offset < this.selectedFile.size) {
+                    // Continue with next chunk (with small delay to prevent buffer overflow)
+                    setTimeout(readChunk, 10);
+                } else {
+                    // Send completion message
+                    setTimeout(() => {
+                        this.webrtc.sendMessage({ type: 'fileComplete' });
+                        document.getElementById('transfer-status').textContent = 'File sent successfully!';
+                        setTimeout(() => this.showComplete('File sent successfully!'), 1000);
+                    }, 100);
+                }
+            };
+
+            readChunk();
 
         } catch (error) {
             console.error('Error sending file:', error);
