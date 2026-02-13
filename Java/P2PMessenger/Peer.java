@@ -1,10 +1,8 @@
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketTimeoutException;
 import java.util.Scanner;
 
 public class Peer {
@@ -13,65 +11,78 @@ public class Peer {
     private Send sender;
     private Receive receiver;
 
-    public void punch(String vpsIp, int vpsPort, int localPort) throws Exception {
+    public void punch(String vpsIp, int vpsPort, int listenPort) throws Exception {
         System.out.println("Connecting to rendezvous server...");
         Socket vps = new Socket(vpsIp, vpsPort);
 
         DataInputStream in = new DataInputStream(vps.getInputStream());
-        String peerIp = in.readUTF();
-        int peerPort = in.readInt();
-        vps.close();
+        DataOutputStream out = new DataOutputStream(vps.getOutputStream());
 
-        System.out.println("Peer is at "+peerIp+":"+peerPort);
-        System.out.println("Starting hole punch...");
+        // Tell server if we can accept connections (0 = no, >0 = port we can listen on)
+        out.writeInt(listenPort);
+        out.flush();
 
-        // Address reuse enabled
-        ServerSocket listenSock = new ServerSocket();
-        listenSock.setReuseAddress(true);
-        listenSock.bind(new InetSocketAddress(localPort));
-        listenSock.setSoTimeout(500);
+        System.out.println("Waiting for peer to join...");
 
-        socket = null;
-        int attempts = 0;
-        while (socket == null && attempts < 50) {
-            System.out.println("Attempt "+(attempts+1)+"...");
+        // Read assigned role
+        String role = in.readUTF();
+        System.out.println("Role assigned: " + role);
 
-            // Try to accept incoming connection
-            try {
-                socket = listenSock.accept();
-                System.out.println("Accepted connection from peer");
-                break;
+        if (role.equals("LISTEN")) {
+            int port = in.readInt();
+            String peerIp = in.readUTF();
+            vps.close();
+
+            System.out.println("Waiting for peer (" + peerIp + ") to connect on port " + port);
+            ServerSocket ss = new ServerSocket(port);
+            ss.setReuseAddress(true);
+            socket = ss.accept();
+            ss.close();
+            System.out.println("Peer connected!");
+
+            doKeyExchange();
+            startChat();
+
+        } else if (role.equals("CONNECT")) {
+            String peerIp = in.readUTF();
+            int peerPort = in.readInt();
+            vps.close();
+
+            System.out.println("Connecting to peer at " + peerIp + ":" + peerPort);
+
+            // Retry loop
+            int attempts = 0;
+            while (attempts < 10) {
+                try {
+                    socket = new Socket(peerIp, peerPort);
+                    break;
+                } catch (IOException e) {
+                    System.out.println("Attempt " + (++attempts) + " failed, retrying...");
+                    Thread.sleep(1000);
+                }
             }
-            catch (SocketTimeoutException e) {
-                System.err.println("ERROR: "+e.getMessage());
+            if (socket == null) {
+                throw new IOException("Failed to connect to peer");
             }
+            System.out.println("Connected to peer!");
 
-            try {
-                Socket s = new Socket();
-                s.setReuseAddress(true);
-                s.bind(new InetSocketAddress(localPort));
-                s.connect(new InetSocketAddress(peerIp, peerPort), 500);
-                socket = s;
-                System.out.println("Connected to peer!");
-                break;
-            }
-            catch (IOException e) {
-                System.err.println("ERROR: "+e.getMessage());
-            }
+            doKeyExchange();
+            startChat();
 
-            attempts++;
-            Thread.sleep(300);
+        } else if (role.equals("RELAY")) {
+            // Both behind NAT - use VPS as relay
+            System.out.println("Both peers behind NAT - using relay mode");
+            System.out.println("Messages will be relayed through VPS (still encrypted!)");
+            
+            // Use the VPS connection directly as our socket
+            socket = vps;
+
+            doKeyExchange();
+            startChat();
+        } else {
+            vps.close();
+            throw new IOException("Unknown role: " + role);
         }
-
-        listenSock.close();
-
-        if (socket == null) {
-            throw new IOException("Hole punch failed after "+attempts+" attempts");
-        }
-
-        System.out.println("Hole punch successful!");
-        doKeyExchange();
-        startChat();
     }
 
     public void connect(String ip, int port) throws Exception {
@@ -143,14 +154,14 @@ public class Peer {
 
         System.out.println("1. Connect to peer (direct)");
         System.out.println("2. Wait for peer (direct)");
-        System.out.println("3. Hole punch (via VPS)");
+        System.out.println("3. Via VPS (NAT traversal)");
         System.out.print("Select: ");
         int choice = sc.nextInt();
         sc.nextLine();
 
         try {
             if (choice == 1) {
-                System.out.println("Peer IP: ");
+                System.out.print("Peer IP: ");
                 String ip = sc.nextLine();
                 System.out.print("Port: ");
                 int port = sc.nextInt();
@@ -164,14 +175,15 @@ public class Peer {
             else if (choice == 3) {
                 System.out.print("VPS IP: ");
                 String vpsIp = sc.nextLine();
-                System.out.print("VPS port (default: 8888): ");
+                System.out.print("VPS port (default 8888): ");
                 String vpsPortStr = sc.nextLine();
                 int vpsPort = vpsPortStr.isEmpty() ? 8888 : Integer.parseInt(vpsPortStr);
-                System.out.print("Local port (default: 9999): ");
-                String localPortStr = sc.nextLine();
-                int localPort = localPortStr.isEmpty() ? 9999 : Integer.parseInt(localPortStr);
 
-                peer.punch(vpsIp, vpsPort, localPort);
+                System.out.print("Can you accept connections? Port to listen (0 if behind NAT): ");
+                String listenPortStr = sc.nextLine();
+                int listenPort = listenPortStr.isEmpty() ? 0 : Integer.parseInt(listenPortStr);
+
+                peer.punch(vpsIp, vpsPort, listenPort);
             }
         }
         catch (Exception e) {
