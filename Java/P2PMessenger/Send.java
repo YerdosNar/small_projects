@@ -6,11 +6,13 @@ import java.util.Scanner;
 public class Send implements Runnable {
     private final DataOutputStream dOut;
     private final Scanner scanner;
+    private final Crypto crypto;
     private volatile boolean running = true;
 
-    public Send(Socket socket) throws IOException {
+    public Send(Socket socket, Crypto crypto) throws IOException {
         this.dOut = new DataOutputStream(socket.getOutputStream());
         this.scanner = new Scanner(System.in);
+        this.crypto = crypto;
     }
 
     @Override
@@ -25,14 +27,21 @@ public class Send implements Runnable {
                     break;
                 }
 
-                byte[] data = message.getBytes("UTF-8");
-                dOut.writeInt(data.length);
-                dOut.write(data);
+                byte[] plaintext = message.getBytes("UTF-8");
+
+                byte[] ciphertext = crypto.encrypt(plaintext);
+                System.out.println("DEBUG: Cipher: "+ciphertext.length+", Plain: "+plaintext.length);
+
+                dOut.writeInt(ciphertext.length);
+                dOut.write(ciphertext);
                 dOut.flush();
             }
         }
         catch (IOException e) {
             if (running) System.err.println("Send error: " + e.getMessage());
+        }
+        catch (Exception e) {
+            if (running) System.err.println("Encrypt error: " + e.getMessage());
         }
     }
 
