@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+if [[ "$1" == "-c" || "$1" == "--clean" ]];then
+    echo "Cleaning"
+    rm *.class
+else
+    echo "Compiling..."
+    javac *.java
+fi
