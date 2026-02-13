@@ -29,7 +29,7 @@ public class Receive implements Runnable {
 
                 // Convert it to String and print
                 String message = new String(plaintext, "UTF-8");
-                System.out.println("\nPeer: " + message);
+                System.out.println("\rPeer: " + message);
                 System.out.print("You: ");
             }
         }
