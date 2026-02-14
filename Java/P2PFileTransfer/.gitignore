@@ -1,0 +1,34 @@
+# Compiled
+*.class
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# Spring Boot
+*.log
+logs/
+
+# H2 Database
+*.db
+*.mv.db
+*.trace.db
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.jar
+*.war
+!.mvn/wrapper/maven-wrapper.jar
