@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P2P Secure Transfer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>P2P File Transfer</h1>
+
+        <div class="actions">
+            <button id="receiveBtn">Receive File</button>
+            <button id="sendBtn">Send File</button>
+        </div>
+
+        <div id="receiveSection" class="hidden">
+            <h3>Set Receiver Password</h3>
+            <input type="password" id="setPass" placeholder="Enter a password">
+            <button id="generateIdBtn">Generate ID</button>
+            <div id="receiverInfo" class="info-box hidden">
+                <p>Share these with the sender:</p>
+                <div class="field">ID: <span id="displayId"></span></div>
+                <div class="field">Pass: <span id="displayPass"></span></div>
+                <small>Expires in 5 minutes</small>
+            </div>
+            <p id="status">Waiting for connection...</p>
+        </div>
+
+        <div id="sendSection" class="hidden">
+            <h3>Connect to Receiver</h3>
+            <input type="text" id="targetId" placeholder="Receiver ID">
+            <input type="password" id="targetPass" placeholder="Receiver Password">
+
+            <div id="dropZone">
+                Drag & Drop file here or <br>
+                <input type="file" id="fileInput">
+            </div>
+            <button id="initiateBtn">Start Transfer</button>
+        </div>
+
+        <div id="progressContainer" class="hidden">
+            <p id="transferStatus">Transferring...</p>
+            <progress id="progressBar" value="0" max="100"></progress>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
