@@ -23,4 +23,18 @@ void sccs(const char *msg, ...);
 void err(const char *msg, ...);
 void print_progress_bar(int percent);
 
+// packet
+#define T_EOF       1
+#define T_DAT       2
+#define T_ACK       3
+#define PACKET_SIZE 1400
+// packet size - sizeof(seq_num) - sizeof(type)
+#define DATA_SIZE   1395
+#include <stdint.h>
+typedef struct __attribute__((packed)) {
+    uint8_t type;
+    uint32_t seq_num;
+    uint8_t data[DATA_SIZE];
+} packet_t;
+
 #endif
