@@ -9,15 +9,16 @@
 void usage(char *exe) {
     printf("Usage: %s [options]\n", exe);
     printf("\n");
-printf:
+    printf("Options:\n");
+    printf("    -i, --ip            Receiver's IP\n");
+    printf("    -s, --s-port        Sender's PORT\n");
+    printf("    -r, --r-port        Receiver's PORT\n");
+    printf("    -f, --filename      File to send\n");
+    printf("    -h, --help          This message\n");
+    exit(0);
 }
 
 int main(int argc, char **argv) {
-    info("Socket creating...");
-    int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-    if(sockfd < 0) err("Socket creation failed");
-    sccs("Socket created!");
-
     // Initial variables
     char ip_buf[INET_ADDRSTRLEN];
     char filename_buf[128];
@@ -27,7 +28,7 @@ int main(int argc, char **argv) {
     uint32_t receiver_port;
     char     *filename;
 
-    if(argc < 9) {
+    if(argc < 2) {
         printf("Enter your port: ");
         scanf("%u", &sender_port);
         getchar(); // leftover newline from scanf
@@ -48,6 +49,9 @@ int main(int argc, char **argv) {
             filename = filename_buf;
         }
     }
+    else if((argc > 2 && argc < 9) || !strncmp("-h", argv[1], 2) || !strncmp("--help", argv[1], 6)) {
+        usage(argv[0]);
+    }
     else {
         for(int i = 1; i < argc; i++) {
             if((!strncmp("-f", argv[i], 2) || !strncmp("--filename", argv[i], 10)) && i+1 < argc) {
@@ -56,7 +60,7 @@ int main(int argc, char **argv) {
             else if((!strncmp("-i", argv[i], 2) || !strncmp("--ip", argv[i], 4)) && i+1 < argc) {
                 receiver_ip = argv[i+1];
             }
-            else if((!strncmp("-p", argv[i], 2) || !strncmp("--s-port", argv[i], 8)) && i+1 < argc) {
+            else if((!strncmp("-s", argv[i], 2) || !strncmp("--s-port", argv[i], 8)) && i+1 < argc) {
                 sender_port = atoi(argv[i+1]);
             }
             else if((!strncmp("-r", argv[i], 2) || !strncmp("--r-port", argv[i], 8)) && i+1 < argc) {
@@ -64,6 +68,11 @@ int main(int argc, char **argv) {
             }
         }
     }
+    info("Socket creating...");
+    int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    if(sockfd < 0) err("Socket creation failed");
+    sccs("Socket created!");
+
 
     struct sockaddr_in sender_addr  = {0};
     sender_addr.sin_family          = AF_INET;
