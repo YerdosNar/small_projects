@@ -1,0 +1,26 @@
+#ifndef UTILS_H
+#define UTILS_H
+
+#include <stdio.h>
+#include <sys/ioctl.h>
+#include <stdarg.h>
+#include <stdlib.h>
+
+#define RED "\033[31m"
+#define GRN "\033[32m"
+#define YEL "\033[33m"
+#define BLU "\033[34m"
+
+#define B_RED "\033[41m"
+#define B_GRN "\033[42m"
+#define B_YEL "\033[43m"
+#define B_BLU "\033[44m"
+#define NOC "\033[0m"
+
+void info(const char *msg, ...);
+void warn(const char *msg, ...);
+void sccs(const char *msg, ...);
+void err(const char *msg, ...);
+void print_progress_bar(int percent);
+
+#endif
