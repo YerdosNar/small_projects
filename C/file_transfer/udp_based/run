@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+gcc -o ex_sender sender.c utils.c -Wall -Wextra
+gcc -o ex_receiver receiver.c utils.c -Wall -Wextra

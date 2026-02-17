@@ -6,12 +6,6 @@
 
 #include "utils.h"
 
-void usage(char *exe) {
-    printf("Usage: %s [options]\n", exe);
-    printf("\n");
-printf:
-}
-
 int main(int argc, char **argv) {
     info("Socket creating...");
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
