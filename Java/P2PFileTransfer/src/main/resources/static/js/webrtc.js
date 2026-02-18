@@ -12,6 +12,10 @@ class WebRTCManager {
         this.remotePeerId = null;
         this.sessionToken = null;
         this.isInitiator = false;
+
+        // ICE candidate queue - holds candidates that arrive before remoteDescription is set
+        this.pendingIceCandidates = [];
+        this.remoteDescriptionSet = false;
         
         // Callbacks
         this.onConnected = null;
@@ -263,6 +267,10 @@ class WebRTCManager {
 
         const offer = JSON.parse(message.payload);
         await this.peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
+        this.remoteDescriptionSet = true;
+
+        // Flush any ICE candidates that arrived before the remote description was ready
+        await this.flushPendingIceCandidates();
 
         const answer = await this.peerConnection.createAnswer();
         await this.peerConnection.setLocalDescription(answer);
@@ -281,19 +289,42 @@ class WebRTCManager {
     async handleAnswer(message) {
         const answer = JSON.parse(message.payload);
         await this.peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+        this.remoteDescriptionSet = true;
+
+        // Flush any ICE candidates that arrived before the remote description was ready
+        await this.flushPendingIceCandidates();
+    }
+
+    /**
+     * Flush ICE candidates that were queued before remote description was set
+     */
+    async flushPendingIceCandidates() {
+        console.log(`Flushing ${this.pendingIceCandidates.length} pending ICE candidates`);
+        while (this.pendingIceCandidates.length > 0) {
+            const candidate = this.pendingIceCandidates.shift();
+            try {
+                await this.peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+            } catch (error) {
+                console.error('Error adding queued ICE candidate:', error);
+            }
+        }
     }
 
     /**
      * Handle incoming ICE candidate
      */
     async handleIceCandidate(message) {
-        if (this.peerConnection) {
-            const candidate = JSON.parse(message.payload);
-            try {
-                await this.peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
-            } catch (error) {
-                console.error('Error adding ICE candidate:', error);
-            }
+        const candidate = JSON.parse(message.payload);
+        if (!this.peerConnection || !this.remoteDescriptionSet) {
+            // Queue the candidate — remote description not yet set
+            console.log('Queueing ICE candidate (remote description not set yet)');
+            this.pendingIceCandidates.push(candidate);
+            return;
+        }
+        try {
+            await this.peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+        } catch (error) {
+            console.error('Error adding ICE candidate:', error);
         }
     }
 
@@ -328,6 +359,8 @@ class WebRTCManager {
      * Close all connections
      */
     close() {
+        this.pendingIceCandidates = [];
+        this.remoteDescriptionSet = false;
         if (this.dataChannel) {
             this.dataChannel.close();
         }

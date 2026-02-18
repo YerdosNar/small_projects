@@ -176,22 +176,29 @@ public class SignalingHandler extends TextWebSocketHandler {
     private void handleConnected(WebSocketSession session, SignalingMessage msg) throws IOException {
         String peerId = msg.getFrom();
         logger.info("P2P connection established for peer: {}", peerId);
-        
-        // Mark the session as connected
-        sessionService.markConnected(peerId);
-        
-        // Get the connected peer
+
+        // Resolve the receiver peer ID: the DB session belongs to the receiver, not the sender.
+        // connectedPeers maps each side to the other side, so check both sides.
         String connectedPeerId = connectedPeers.get(peerId);
-        
-        // Delete the session from database (cleanup after successful connection)
-        // We only delete when both peers have confirmed connection
-        // For simplicity, delete immediately - in production you might want to wait
-        sessionService.deleteSession(peerId);
-        
+
+        // Determine which of the two peer IDs is the receiver (exists in DB)
+        String receiverPeerId = null;
+        if (sessionService.findByPeerId(peerId).isPresent()) {
+            receiverPeerId = peerId;
+        } else if (connectedPeerId != null && sessionService.findByPeerId(connectedPeerId).isPresent()) {
+            receiverPeerId = connectedPeerId;
+        }
+
+        if (receiverPeerId != null) {
+            // Mark the session as connected and then delete it (cleanup)
+            sessionService.markConnected(receiverPeerId);
+            sessionService.deleteSession(receiverPeerId);
+        }
+
         // Notify both peers
         SignalingMessage response = SignalingMessage.connected(peerId);
         session.sendMessage(new TextMessage(gson.toJson(response)));
-        
+
         if (connectedPeerId != null) {
             WebSocketSession otherSession = peerSessions.get(connectedPeerId);
             if (otherSession != null && otherSession.isOpen()) {

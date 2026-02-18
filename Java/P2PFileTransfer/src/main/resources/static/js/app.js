@@ -22,6 +22,7 @@ class App {
         this.receivedSize = 0;
         this.expectedFileInfo = null;
         this.transferStartTime = null;
+        this.keyReadyPromise = null; // resolves when shared key has been derived
         
         // Buffer management
         this.BUFFER_THRESHOLD = 512 * 1024; // 512KB buffer threshold
@@ -432,8 +433,10 @@ class App {
                 
                 switch (message.type) {
                     case 'publicKey':
-                        // Receiver: derive shared key from sender's public key
-                        await this.crypto.deriveSharedKey(message.publicKey);
+                        // Receiver: derive shared key from sender's public key.
+                        // Store the promise so binary chunks can await it.
+                        this.keyReadyPromise = this.crypto.deriveSharedKey(message.publicKey);
+                        await this.keyReadyPromise;
                         console.log('Shared key derived');
                         break;
                     
@@ -454,6 +457,10 @@ class App {
                 }
             } else {
                 // Binary data - encrypted file chunk
+                // Ensure the shared key is available before attempting decryption
+                if (this.keyReadyPromise) {
+                    await this.keyReadyPromise;
+                }
                 const decryptedChunk = await this.crypto.decryptChunk(data);
                 this.receivedChunks.push(new Uint8Array(decryptedChunk));
                 this.receivedSize += decryptedChunk.byteLength;
@@ -594,6 +601,7 @@ class App {
         this.receivedChunks = [];
         this.receivedSize = 0;
         this.expectedFileInfo = null;
+        this.keyReadyPromise = null;
         
         // Reset managers
         this.crypto = new CryptoManager();
