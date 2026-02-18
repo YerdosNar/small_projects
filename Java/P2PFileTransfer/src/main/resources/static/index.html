@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P2P File Transfer</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔒 P2P File Transfer</h1>
+            <p class="subtitle">Secure, Direct, End-to-End Encrypted</p>
+        </header>
+
+        <!-- Role Selection -->
+        <section id="role-selection" class="card">
+            <h2>Choose Your Role</h2>
+            <div class="role-buttons">
+                <button id="btn-receiver" class="btn btn-primary btn-large">
+                    <span class="icon">📥</span>
+                    <span class="text">Receive Files</span>
+                    <span class="desc">Create a session ID to receive</span>
+                </button>
+                <button id="btn-sender" class="btn btn-secondary btn-large">
+                    <span class="icon">📤</span>
+                    <span class="text">Send Files</span>
+                    <span class="desc">Connect to a receiver</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Receiver Section -->
+        <section id="receiver-section" class="card hidden">
+            <h2>📥 Receive Files</h2>
+            
+            <!-- Step 1: Create Session -->
+            <div id="receiver-create" class="step">
+                <h3>Step 1: Create Your Session</h3>
+                <p>Set a password that you'll share with the sender</p>
+                <div class="form-group">
+                    <label for="receiver-password">Password</label>
+                    <input type="password" id="receiver-password" placeholder="Enter a password (min 4 chars)" minlength="4">
+                </div>
+                <button id="btn-create-session" class="btn btn-primary">Create Session</button>
+            </div>
+            
+            <!-- Step 2: Waiting -->
+            <div id="receiver-waiting" class="step hidden">
+                <h3>Step 2: Share Your Credentials</h3>
+                <div class="credentials-box">
+                    <div class="credential">
+                        <label>Your ID</label>
+                        <div class="value" id="display-peer-id">------</div>
+                        <button class="btn-copy" data-copy="display-peer-id">Copy</button>
+                    </div>
+                    <div class="credential">
+                        <label>Password</label>
+                        <div class="value" id="display-password">••••••</div>
+                        <button class="btn-copy" data-copy="receiver-password">Copy</button>
+                    </div>
+                </div>
+                <div class="timer">
+                    <span>Session expires in: </span>
+                    <span id="session-timer">30:00</span>
+                </div>
+                <div class="status waiting">
+                    <div class="spinner"></div>
+                    <span>Waiting for sender to connect...</span>
+                </div>
+                <button id="btn-cancel-session" class="btn btn-danger btn-small">Cancel Session</button>
+            </div>
+        </section>
+
+        <!-- Sender Section -->
+        <section id="sender-section" class="card hidden">
+            <h2>📤 Send Files</h2>
+            
+            <!-- Step 1: Find Receiver -->
+            <div id="sender-search" class="step">
+                <h3>Step 1: Find Receiver</h3>
+                <div class="form-group">
+                    <label for="search-peer-id">Receiver's ID</label>
+                    <input type="text" id="search-peer-id" placeholder="Enter 6-character ID" maxlength="6">
+                </div>
+                <button id="btn-search-peer" class="btn btn-primary">Search</button>
+                <div id="search-result" class="search-result hidden"></div>
+            </div>
+            
+            <!-- Step 2: Authenticate -->
+            <div id="sender-auth" class="step hidden">
+                <h3>Step 2: Authenticate</h3>
+                <div class="form-group">
+                    <label for="auth-password">Receiver's Password</label>
+                    <input type="password" id="auth-password" placeholder="Enter the shared password">
+                </div>
+                <button id="btn-authenticate" class="btn btn-primary">Connect</button>
+            </div>
+            
+            <!-- Step 3: Send File -->
+            <div id="sender-file" class="step hidden">
+                <h3>Step 3: Select & Send File</h3>
+                <div class="file-input-wrapper">
+                    <input type="file" id="file-input" class="hidden">
+                    <button id="btn-select-file" class="btn btn-secondary">
+                        <span class="icon">📁</span> Select File
+                    </button>
+                    <span id="selected-file-name">No file selected</span>
+                </div>
+                <div id="file-info" class="file-info hidden">
+                    <p><strong>Name:</strong> <span id="file-name"></span></p>
+                    <p><strong>Size:</strong> <span id="file-size"></span></p>
+                    <p><strong>Type:</strong> <span id="file-type"></span></p>
+                </div>
+                <button id="btn-send-file" class="btn btn-primary" disabled>
+                    <span class="icon">🚀</span> Send File
+                </button>
+            </div>
+        </section>
+
+        <!-- Transfer Progress -->
+        <section id="transfer-section" class="card hidden">
+            <h2>📊 Transfer Progress</h2>
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+                <div class="progress-info">
+                    <span id="progress-percent">0%</span>
+                    <span id="progress-speed">0 KB/s</span>
+                </div>
+            </div>
+            <div class="transfer-details">
+                <p><strong>File:</strong> <span id="transfer-file-name">-</span></p>
+                <p><strong>Size:</strong> <span id="transfer-file-size">-</span></p>
+                <p><strong>Status:</strong> <span id="transfer-status">Preparing...</span></p>
+            </div>
+        </section>
+
+        <!-- Complete Section -->
+        <section id="complete-section" class="card hidden">
+            <div class="complete-content">
+                <div class="checkmark">✓</div>
+                <h2>Transfer Complete!</h2>
+                <p id="complete-message">File transferred successfully.</p>
+                <button id="btn-new-transfer" class="btn btn-primary">New Transfer</button>
+            </div>
+        </section>
+
+        <!-- Back Button -->
+        <button id="btn-back" class="btn btn-back hidden">← Back</button>
+
+        <!-- Status Messages -->
+        <div id="toast-container"></div>
+    </div>
+
+    <footer>
+        <p>🔐 All transfers are end-to-end encrypted</p>
+        <p>📡 Direct P2P connection - files never touch our servers</p>
+    </footer>
+
+    <script src="js/crypto.js"></script>
+    <script src="js/webrtc.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
