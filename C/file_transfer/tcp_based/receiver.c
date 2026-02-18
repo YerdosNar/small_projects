@@ -199,7 +199,6 @@ void receive_file(int client_socket) {
 
     char buffer[BUFFER_SIZE];
     unsigned long total_received = 0;
-    int seq = 0;
     ssize_t bytes_received;
     int last_percent = -1;
     while((bytes_received=recv(client_socket, buffer, sizeof(buffer), 0)) > 0) {
@@ -251,7 +250,7 @@ int main(int argc, char **argv) {
             i++;
         }
         else if((!strcmp("-v", argv[i]) || !strcmp("--vps", argv[i])) && i+1 < argc) {
-            strcpy(vps_ip, argv[i+1]);
+            strncpy(vps_ip, argv[i+1], sizeof(vps_ip)-1);
             i++;
         }
         else if((!strcmp("-V", argv[i]) || !strcmp("--vps-port", argv[i])) && i+1 < argc) {
@@ -270,7 +269,7 @@ int main(int argc, char **argv) {
         if(strlen(vps_ip) == 0) {
             printf("VPS IP: ");
             fgets(vps_ip, sizeof(vps_ip), stdin);
-            vps_ip[strlen(vps_ip)-1] = '\0';
+            vps_ip[strcspn(vps_ip, "\n")] = '\0';
         }
         info("Mode: HOLE PUNCH via VPS %s:%d", vps_ip, vps_port);
         client_socket = punch_hole_receive(vps_ip, vps_port);

@@ -23,19 +23,26 @@ int main(void) {
     }
     listen(listen_sock, 2);
 
-    info("VPS: Waiting for Peer1...");
-    c1 = accept(listen_sock, (struct sockaddr *) &addr1, &len);
-    success("VPS: Peer1 connected form %s:%d", inet_ntoa(addr1.sin_addr), ntohs(addr1.sin_port));
+    int client_served = 1;
+    while(1) {
+        info("VPS: Waiting for Peer1...");
+        c1 = accept(listen_sock, (struct sockaddr *) &addr1, &len);
+        success("VPS: Peer1 connected form %s:%d", inet_ntoa(addr1.sin_addr), ntohs(addr1.sin_port));
 
-    info("VPS: Waiting for Peer2...");
-    c2 = accept(listen_sock, (struct sockaddr *) &addr2, &len);
-    success("VPS: Peer2 connected form %s:%d", inet_ntoa(addr2.sin_addr), ntohs(addr2.sin_port));
+        info("VPS: Waiting for Peer2...");
+        c2 = accept(listen_sock, (struct sockaddr *) &addr2, &len);
+        success("VPS: Peer2 connected form %s:%d", inet_ntoa(addr2.sin_addr), ntohs(addr2.sin_port));
 
-    // 2. Swaping infos
-    info("VPS: Sending peers infos");
-    send(c1, &addr2, sizeof(addr2), 0);
-    send(c2, &addr1, sizeof(addr1), 0);
-    success("VPS: Infos swapped. Closing connections.");
+        // 2. Swaping infos
+        info("VPS: Sending peers infos");
+        send(c1, &addr2, sizeof(addr2), 0);
+        send(c2, &addr1, sizeof(addr1), 0);
+
+        success("VPS: %d pair served successfully!", client_served);
+        success("VPS: Infos swapped. Closing connections.");
+        printf("\n");
+        client_served++;
+    }
 
     close(c1);
     close(c2);

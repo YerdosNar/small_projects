@@ -1,12 +1,12 @@
+#ifndef LOGGER_H
+#define LOGGER_H
+
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
 
 // To draw progress bar
 #include <sys/ioctl.h>
-
-#ifndef LOGGER_H
-#define LOGGER_H
 
 #define RED "\033[31m"
 #define GRN "\033[32m"

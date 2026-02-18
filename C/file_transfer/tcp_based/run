@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 
 if [[ "$1" == "-c" || "$1" == "--clean" ]]; then
+    echo "Cleaning executables"
     rm exe_*
+    echo "Cleaning recv* files"
+    rm recv_*
+
 else
     gcc -Wall -Wextra -O3 logger.c -o exe_sender sender.c
     gcc -Wall -Wextra -O3 logger.c -o exe_receiver receiver.c

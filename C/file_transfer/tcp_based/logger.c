@@ -52,7 +52,7 @@ void print_progress_bar(int percentage) {
             printf(NOC " ");
         }
     }
-    printf("] %3d%%", percentage);
+    printf(NOC "] %3d%%", percentage);
     fflush(stdout);
 }
 

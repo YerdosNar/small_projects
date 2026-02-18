@@ -187,7 +187,6 @@ void send_file(int network_socket, char *filename) {
     if((bytes_sent=send(network_socket, metadata, sizeof(metadata), 0)) < 0) { err("Failed to send data");}
     success("MetaData sent successfully");
 
-    int seq = 1;
     unsigned long total_sent = 0;
     char buffer[BUFFER_SIZE];
     size_t bytes_read;
@@ -250,15 +249,15 @@ int main(int argc, char **argv) {
             i++;
         }
         else if((!strcmp("-f", argv[i]) || !strcmp("--filename", argv[i])) && i+1 < argc) {
-            strcpy(filename, argv[i+1]);
+            strncpy(filename, argv[i+1], sizeof(filename)-1);
             i++;
         }
         else if((!strcmp("-i", argv[i]) || !strcmp("--ip", argv[i])) && i+1 < argc) {
-            strcpy(receiver_ip, argv[i+1]);
+            strncpy(receiver_ip, argv[i+1], sizeof(receiver_ip)-1);
             i++;
         }
         else if((!strcmp("-v", argv[i]) || !strcmp("--vps", argv[i])) && i+1 < argc) {
-            strcpy(vps_ip, argv[i+1]);
+            strncpy(vps_ip, argv[i+1], sizeof(vps_ip)-1);
             i++;
         }
         else if((!strcmp("-V", argv[i]) || !strcmp("--vps-port", argv[i])) && i+1 < argc) {
@@ -275,7 +274,7 @@ int main(int argc, char **argv) {
     if(strlen(filename) == 0) {
         printf("Filename to send: ");
         fgets(filename, sizeof(filename), stdin);
-        filename[strlen(filename)-1] = '\0';
+        filename[strcspn(filename, "\n")] = '\0';
     }
 
     int network_socket;
