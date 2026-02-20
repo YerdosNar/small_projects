@@ -22,8 +22,7 @@ public class Utils {
         .redirectErrorStream(true) // Merge error stream to input stream
         .start();
 
-        try (BufferedReader reader = new BufferedReader(
-            new InputStreamReader(process.getInputStream()))) {
+        try (BufferedReader reader = new BufferedReader( new InputStreamReader(process.getInputStream()))) {
             String output = reader.readLine();
             if (output == null || output.trim().isEmpty()) {
                 return -1; // Command failed
@@ -70,13 +69,18 @@ public class Utils {
         }
     }
 
-    public static void drawMessageBubble(String str) {
-        int width = detectConsoleWidth();
+    public static void printProgressBar(long current, long total) {
+        int barLength = detectConsoleWidth() - 16; // "Progress: ".length+[]+100% = 16 chars
+        int percent = (int)(((long) current * 100) / total);
+        int filled =  (int)(((long) current * barLength) / total);
 
-        System.out.println(width);
-    }
-
-    public static void main(String[] args) {
-        drawMessageBubble("he");
+        StringBuilder bar = new StringBuilder("\rProgress: [");
+        for(int i = 0; i < barLength; i++) {
+            if(i < filled) bar.append("=");
+            else if(i == filled) bar.append(">");
+            else bar.append(" ");
+        }
+        bar.append("] ").append(percent).append("%");
+        System.out.print(bar.toString());
     }
 }

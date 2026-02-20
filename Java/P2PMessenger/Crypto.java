@@ -47,7 +47,7 @@ public class Crypto {
     public byte[] encrypt(byte[] plaintext) throws Exception {
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
         byte[] iv = new byte[12]; // GCM IV size
-        SecureRandom.getInstanceStrong().nextBytes(iv);
+        new SecureRandom().nextBytes(iv); // Use nonblocking /dev/urandom
 
         cipher.init(Cipher.ENCRYPT_MODE, aesKey, new GCMParameterSpec(128, iv));
         byte[] ciphertext = cipher.doFinal(plaintext);
