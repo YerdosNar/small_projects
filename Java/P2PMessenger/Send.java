@@ -7,7 +7,7 @@ import java.nio.file.Paths;
 import java.util.Scanner;
 
 public class Send implements Runnable {
-    // Type consts
+    // Message type constants
     public static final byte TYPE_TEXT = 0x01;
     public static final byte TYPE_FILE = 0x02;
 
@@ -29,26 +29,23 @@ public class Send implements Runnable {
                 System.out.print("You: ");
                 String message = scanner.nextLine();
 
-                if(message.equalsIgnoreCase("/quit")) {
+                if (message.equalsIgnoreCase("/quit")) {
                     running = false;
                     break;
                 }
 
-                if(message.equalsIgnoreCase("/file")) {
+                if (message.equalsIgnoreCase("/file")) {
                     System.out.print("Enter the filename: ");
-                    String filename = scanner.nextLine();
-                    // TODO: implement sending a file
+                    String filename = scanner.nextLine().trim();
                     sendFile(filename);
                     continue;
                 }
 
                 sendText(message);
             }
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             if (running) System.err.println("Send error: " + e.getMessage());
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             if (running) System.err.println("Encrypt error: " + e.getMessage());
         }
     }
@@ -65,8 +62,8 @@ public class Send implements Runnable {
     private void sendFile(String filename) throws Exception {
         Path path = Paths.get(filename);
 
-        if(!Files.exists(path)) {
-            System.err.println("File is not found: "+filename);
+        if (!Files.exists(path)) {
+            System.err.println("File not found: " + filename);
             return;
         }
 
@@ -74,14 +71,14 @@ public class Send implements Runnable {
         String name = path.getFileName().toString();
         byte[] nameBytes = name.getBytes("UTF-8");
 
-        // Payload: [nameLength(4B)][nameBytes][fileBytes]
-        byte[] payload = new byte[4+nameBytes.length+fileBytes.length];
-        payload[0] = (byte)(nameBytes.length >> 24);
-        payload[1] = (byte)(nameBytes.length >> 16);
-        payload[2] = (byte)(nameBytes.length >> 8);
-        payload[3] = (byte)(nameBytes.length);
+        // Payload: [nameLength (4 bytes)][nameBytes][fileBytes]
+        byte[] payload = new byte[4 + nameBytes.length + fileBytes.length];
+        payload[0] = (byte) (nameBytes.length >> 24);
+        payload[1] = (byte) (nameBytes.length >> 16);
+        payload[2] = (byte) (nameBytes.length >> 8);
+        payload[3] = (byte) (nameBytes.length);
         System.arraycopy(nameBytes, 0, payload, 4, nameBytes.length);
-        System.arraycopy(fileBytes, 0, payload, 4+nameBytes.length, fileBytes.length);
+        System.arraycopy(fileBytes, 0, payload, 4 + nameBytes.length, fileBytes.length);
 
         byte[] ciphertext = crypto.encrypt(prependType(TYPE_FILE, payload));
 
@@ -89,14 +86,16 @@ public class Send implements Runnable {
         dOut.write(ciphertext);
         dOut.flush();
 
-        System.out.println("[Sent file: "+name+" ("+fileBytes.length+" bytes)]");
+        System.out.println("[Sent file: " + name + " (" + fileBytes.length + " bytes)]");
     }
 
+    /**
+     * Prepends a single type byte to the given data.
+     */
     private byte[] prependType(byte type, byte[] data) {
-        byte[] result = new byte[1+data.length];
+        byte[] result = new byte[1 + data.length];
         result[0] = type;
         System.arraycopy(data, 0, result, 1, data.length);
-
         return result;
     }
 
