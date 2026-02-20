@@ -12,6 +12,7 @@ public class Peer {
     private Crypto crypto;
     private Send sender;
     private Receive receiver;
+    private final Scanner sc = new Scanner(System.in);
 
     public void punch(String vpsIp, int vpsPort, int listenPort) throws Exception {
         System.out.println("Connecting to rendezvous server...");
@@ -20,13 +21,11 @@ public class Peer {
         DataInputStream in = new DataInputStream(vps.getInputStream());
         DataOutputStream out = new DataOutputStream(vps.getOutputStream());
 
-        // Tell server if we can accept connections (0 = no, >0 = port we can listen on)
         out.writeInt(listenPort);
         out.flush();
 
         System.out.println("Waiting for peer to join...");
 
-        // Read assigned role
         String role = in.readUTF();
         System.out.println("Role assigned: " + role);
 
@@ -52,7 +51,6 @@ public class Peer {
 
             System.out.println("Connecting to peer at " + peerIp + ":" + peerPort);
 
-            // Retry loop
             int attempts = 0;
             while (attempts < 10) {
                 try {
@@ -72,11 +70,9 @@ public class Peer {
             startChat();
 
         } else if (role.equals("RELAY")) {
-            // Both behind NAT - use VPS as relay
             System.out.println("Both peers behind NAT - using relay mode");
             System.out.println("Messages will be relayed through VPS (still encrypted!)");
 
-            // Use the VPS connection directly as our socket
             socket = vps;
 
             doKeyExchange();
@@ -88,7 +84,7 @@ public class Peer {
     }
 
     public void connect(String ip, int port) throws Exception {
-        System.out.println("Connecting to "+ip+":"+port);
+        System.out.println("Connecting to " + ip + ":" + port);
         socket = new Socket(ip, port);
         System.out.println("Connected!");
         doKeyExchange();
@@ -97,9 +93,9 @@ public class Peer {
 
     public void listen(int port) throws Exception {
         ServerSocket server = new ServerSocket(port);
-        System.out.println("Listening on port: "+port+"...");
+        System.out.println("Listening on port: " + port + "...");
         socket = server.accept();
-        System.out.println("Peer connected from "+socket.getInetAddress());
+        System.out.println("Peer connected from " + socket.getInetAddress());
         server.close();
         doKeyExchange();
         startChat();
@@ -112,25 +108,26 @@ public class Peer {
         DataInputStream in = new DataInputStream(socket.getInputStream());
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
 
-        // send our public key
         byte[] ourPubKey = crypto.getPublicKeyBytes();
         out.writeInt(ourPubKey.length);
         out.write(ourPubKey);
         out.flush();
 
-        // receive peer's public key
         int len = in.readInt();
         byte[] peerPubKey = new byte[len];
         in.readFully(peerPubKey);
 
-        // Compute shared secret
         crypto.computeSharedSecret(peerPubKey);
         System.out.println("Encryption established!");
     }
 
-    private void startChat() throws IOException {
-        sender = new Send(socket, crypto);
-        receiver = new Receive(socket, crypto);
+    private void startChat() throws Exception {
+        // Send is constructed first: it asks for the user's name and immediately
+        // sends it to the peer over the socket (before any threads are started).
+        sender = new Send(socket, crypto, sc);
+
+        // Receive is constructed with the local name so it can use it for prompts.
+        receiver = new Receive(socket, crypto, sender.name);
 
         Thread sendThread = new Thread(sender);
         Thread recvThread = new Thread(receiver);
@@ -140,76 +137,71 @@ public class Peer {
 
         try {
             sendThread.join();
-        }
-        catch(InterruptedException e) {
+        } catch (InterruptedException e) {
             System.err.println(e.getMessage());
         }
 
         receiver.stop();
         socket.close();
-        System.out.println("Diconnected...");
+        System.out.println("Disconnected...");
     }
 
     public static void main(String[] args) {
         Peer peer = new Peer();
-        Scanner sc = new Scanner(System.in);
 
         System.out.println("1. Connect to peer (direct)");
         System.out.println("2. Wait for peer (direct)");
         System.out.println("3. Via VPS (NAT traversal)");
         System.out.print("Select: ");
-        int choice = sc.nextInt();
-        sc.nextLine();
+        int choice = peer.sc.nextInt();
+        peer.sc.nextLine();
 
         try {
             if (choice == 1) {
                 System.out.print("Peer IP: ");
-                String ip = sc.nextLine();
+                String ip = peer.sc.nextLine();
                 System.out.print("Port: ");
-                int port = sc.nextInt();
+                int port = peer.sc.nextInt();
+                peer.sc.nextLine();
                 peer.connect(ip, port);
-            }
-            else if (choice == 2) {
+            } else if (choice == 2) {
                 System.out.print("Port to listen: ");
-                int port = sc.nextInt();
+                int port = peer.sc.nextInt();
+                peer.sc.nextLine();
                 peer.listen(port);
-            }
-            else if (choice == 3) {
+            } else if (choice == 3) {
                 String vpsIp = "";
                 System.out.print("IP/Domain name [i/D]: ");
-                String ipOrDomain = sc.nextLine();
-                if(ipOrDomain.equalsIgnoreCase("i")) {
+                String ipOrDomain = peer.sc.nextLine();
+                if (ipOrDomain.equalsIgnoreCase("i")) {
                     System.out.print("VPS IP: ");
-                    vpsIp = sc.nextLine();
-                }
-                else {
+                    vpsIp = peer.sc.nextLine();
+                } else {
                     System.out.print("VPS Domain name: ");
-                    String domName = sc.nextLine();
+                    String domName = peer.sc.nextLine();
                     try {
                         InetAddress inetAddress = InetAddress.getByName(domName);
                         vpsIp = inetAddress.getHostAddress();
-                    }
-                    catch (UnknownHostException e) {
-                        System.err.println("Failed to resolve IP for domain: "+domName);
+                    } catch (UnknownHostException e) {
+                        System.err.println("Failed to resolve IP for domain: " + domName);
                         e.printStackTrace();
                     }
                 }
                 System.out.print("VPS port (default 8888): ");
-                String vpsPortStr = sc.nextLine();
+                String vpsPortStr = peer.sc.nextLine();
                 int vpsPort = vpsPortStr.isEmpty() ? 8888 : Integer.parseInt(vpsPortStr);
 
                 System.out.print("Can you accept connections? Port to listen (0 if behind NAT): ");
-                String listenPortStr = sc.nextLine();
+                String listenPortStr = peer.sc.nextLine();
                 int listenPort = listenPortStr.isEmpty() ? 0 : Integer.parseInt(listenPortStr);
 
                 peer.punch(vpsIp, vpsPort, listenPort);
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             System.err.println("ERROR: " + e.getMessage());
             e.printStackTrace();
         }
 
-        sc.close();
+        peer.sc.close();
     }
 }

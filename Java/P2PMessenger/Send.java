@@ -11,24 +11,32 @@ public class Send implements Runnable {
     public static final byte TYPE_TEXT = 0x01;
     public static final byte TYPE_FILE = 0x02;
 
+    public final String name;
+
     private final DataOutputStream dOut;
     private final Scanner scanner;
     private final Crypto crypto;
     private volatile boolean running = true;
 
-    public Send(Socket socket, Crypto crypto) throws IOException {
+    public Send(Socket socket, Crypto crypto, Scanner scanner) throws Exception {
         this.dOut = new DataOutputStream(socket.getOutputStream());
-        this.scanner = new Scanner(System.in);
+        this.scanner = scanner;
         this.crypto = crypto;
+
+        System.out.print("Your name: ");
+        this.name = scanner.nextLine().trim();
+
+        // Send our name to the peer immediately, before threads start,
+        // so Receive can reliably read it at the start of its run().
+        System.out.println("Sending your name to the peer...");
+        sendText(name);
     }
 
     @Override
     public void run() {
         try {
-            System.out.print("Your name: ");
-            String yourname = scanner.nextLine();
             while (running) {
-                System.out.print(yourname + ": ");
+                System.out.print(name + ": ");
                 String message = scanner.nextLine();
 
                 if (message.equalsIgnoreCase("/quit")) {
@@ -70,8 +78,8 @@ public class Send implements Runnable {
         }
 
         byte[] fileBytes = Files.readAllBytes(path);
-        String name = path.getFileName().toString();
-        byte[] nameBytes = name.getBytes("UTF-8");
+        String fname = path.getFileName().toString();
+        byte[] nameBytes = fname.getBytes("UTF-8");
 
         // Payload: [nameLength (4 bytes)][nameBytes][fileBytes]
         byte[] payload = new byte[4 + nameBytes.length + fileBytes.length];
@@ -88,12 +96,9 @@ public class Send implements Runnable {
         dOut.write(ciphertext);
         dOut.flush();
 
-        System.out.println("[Sent file: " + name + " (" + fileBytes.length + " bytes)]");
+        System.out.println("[Sent file: " + fname + " (" + fileBytes.length + " bytes)]");
     }
 
-    /**
-     * Prepends a single type byte to the given data.
-     */
     private byte[] prependType(byte type, byte[] data) {
         byte[] result = new byte[1 + data.length];
         result[0] = type;

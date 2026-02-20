@@ -6,6 +6,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class Receive implements Runnable {
+    private String peerName = "Peer"; // fallback until name is received
+    private final String localName;
     private final DataInputStream dIn;
     private final Crypto crypto;
     private volatile boolean running = true;
@@ -13,26 +15,43 @@ public class Receive implements Runnable {
     // Directory where received files are saved
     private static final String DOWNLOAD_DIR = "received_files";
 
-    public Receive(Socket socket, Crypto crypto) throws IOException {
+    public Receive(Socket socket, Crypto crypto, String localName) throws IOException {
         this.dIn = new DataInputStream(socket.getInputStream());
         this.crypto = crypto;
+        this.localName = localName;
         // Ensure download directory exists
         Files.createDirectories(Paths.get(DOWNLOAD_DIR));
     }
 
     @Override
     public void run() {
+        // The very first message from the peer is always their name.
+        // Send sends it before its own thread loop starts, so it's safe to block here.
+        try {
+            int length = dIn.readInt();
+            byte[] encrypted = new byte[length];
+            dIn.readFully(encrypted);
+
+            byte[] plain = crypto.decrypt(encrypted);
+            // Strip the type byte (TYPE_TEXT = 0x01)
+            byte[] payload = new byte[plain.length - 1];
+            System.arraycopy(plain, 1, payload, 0, payload.length);
+
+            peerName = new String(payload, "UTF-8");
+            System.out.println("[" + peerName + " joined the chat]");
+            System.out.print(localName + ": ");
+        } catch (Exception e) {
+            System.err.println("Failed to read peer name: " + e.getMessage());
+        }
+
         try {
             while (running) {
-                // Read length-prefixed encrypted message
                 int length = dIn.readInt();
                 byte[] encrypted = new byte[length];
                 dIn.readFully(encrypted);
 
-                // Decrypt
                 byte[] plaintext = crypto.decrypt(encrypted);
 
-                // First byte is the message type
                 byte type = plaintext[0];
                 byte[] payload = new byte[plaintext.length - 1];
                 System.arraycopy(plaintext, 1, payload, 0, payload.length);
@@ -54,8 +73,8 @@ public class Receive implements Runnable {
 
     private void handleText(byte[] payload) throws Exception {
         String message = new String(payload, "UTF-8");
-        System.out.println("\rPeer: " + message);
-        System.out.print("You: ");
+        System.out.println("\r" + peerName + ": " + message);
+        System.out.print(localName + ": ");
     }
 
     private void handleFile(byte[] payload) throws Exception {
@@ -78,8 +97,8 @@ public class Receive implements Runnable {
         Path savePath = resolveUnique(Paths.get(DOWNLOAD_DIR, safeName));
         Files.write(savePath, fileBytes);
 
-        System.out.println("\r[Peer sent file: " + safeName + " (" + fileLength + " bytes) -> saved to " + savePath + "]");
-        System.out.print("You: ");
+        System.out.println("\r[" + peerName + " sent a file: " + safeName + " (" + fileLength + " bytes) -> saved to " + savePath + "]");
+        System.out.print(localName + ": ");
     }
 
     /**
