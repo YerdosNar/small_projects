@@ -6,6 +6,8 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Scanner;
 
 public class Send implements Runnable {
@@ -73,6 +75,7 @@ public class Send implements Runnable {
     }
 
     private void sendFile(String filename) throws Exception {
+        Instant start = Instant.now();
         Path path = Paths.get(filename);
 
         if (!Files.exists(path)) {
@@ -123,9 +126,23 @@ public class Send implements Runnable {
                 Utils.printProgressBar(bytesSent, fileSize);
             }
         }
+        Instant end = Instant.now();
+        long executionTime = Duration.between(start, end).toMillis();
 
         dOut.flush();
-        System.out.println("[Sent file: " + fname + " (" + fileSize + " bytes)]");
+        System.out.println("\n[Sent file: " + fname + " (" + fileSize + " bytes)]");
+        if(executionTime / 1000 >= 10) {
+            double execTimeDouble = executionTime / 1000.0;
+            if(execTimeDouble / 60 == 1) {
+                System.out.printf("Time: %dm %.2fs\n", (int)(execTimeDouble/60), execTimeDouble % 60);
+            }
+            else {
+                System.out.printf("Time: %.2f s\n", execTimeDouble);
+            }
+        }
+        else {
+            System.out.println("Time: " + executionTime + " ms");
+        }
     }
 
     private byte[] prependType(byte type, byte[] data) {
