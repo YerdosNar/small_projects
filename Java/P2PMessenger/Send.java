@@ -27,6 +27,12 @@ public class Send implements Runnable {
                     break;
                 }
 
+                if(message.equalsIgnoreCase("/file")) {
+                    System.out.print("Enter the filename: ");
+                    String filename = scanner.nextLine();
+                    // TODO: implement sending a file
+                }
+
                 byte[] plaintext = message.getBytes("UTF-8");
 
                 byte[] ciphertext = crypto.encrypt(plaintext);
