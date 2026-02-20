@@ -3,6 +3,7 @@
 if [[ "$1" == "-c" || "$1" == "--clean" ]];then
     echo "Cleaning"
     rm *.class
+    rm -rf received_files
 else
     echo "Compiling..."
     javac *.java

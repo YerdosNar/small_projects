@@ -1,8 +1,10 @@
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.Scanner;
 
 public class Peer {
@@ -73,7 +75,7 @@ public class Peer {
             // Both behind NAT - use VPS as relay
             System.out.println("Both peers behind NAT - using relay mode");
             System.out.println("Messages will be relayed through VPS (still encrypted!)");
-            
+
             // Use the VPS connection directly as our socket
             socket = vps;
 
@@ -173,8 +175,25 @@ public class Peer {
                 peer.listen(port);
             }
             else if (choice == 3) {
-                System.out.print("VPS IP: ");
-                String vpsIp = sc.nextLine();
+                String vpsIp = "";
+                System.out.print("IP/Domain name [i/D]");
+                String ipOrDomain = sc.next();
+                if(ipOrDomain.equalsIgnoreCase("i")) {
+                    System.out.print("VPS IP: ");
+                    vpsIp = sc.nextLine();
+                }
+                else {
+                    System.out.print("VPS Domain name: ");
+                    String domName = sc.nextLine();
+                    try {
+                        InetAddress inetAddress = InetAddress.getByName(domName);
+                        vpsIp = inetAddress.getHostAddress();
+                    }
+                    catch (UnknownHostException e) {
+                        System.err.println("Failed to resolve IP for domain: "+domName);
+                        e.printStackTrace();
+                    }
+                }
                 System.out.print("VPS port (default 8888): ");
                 String vpsPortStr = sc.nextLine();
                 int vpsPort = vpsPortStr.isEmpty() ? 8888 : Integer.parseInt(vpsPortStr);
