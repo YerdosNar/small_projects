@@ -1,6 +1,8 @@
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -9,7 +11,8 @@ import java.util.Scanner;
 public class Send implements Runnable {
     // Message type constants
     public static final byte TYPE_TEXT = 0x01;
-    public static final byte TYPE_FILE = 0x02;
+    public static final byte TYPE_FILE_META = 0x02;
+    public static final byte TYPE_FILE_CHNK = 0x03;
 
     public final String name;
 
@@ -77,26 +80,52 @@ public class Send implements Runnable {
             return;
         }
 
-        byte[] fileBytes = Files.readAllBytes(path);
+        long fileSize = Files.size(path);
         String fname = path.getFileName().toString();
         byte[] nameBytes = fname.getBytes("UTF-8");
 
         // Payload: [nameLength (4 bytes)][nameBytes][fileBytes]
-        byte[] payload = new byte[4 + nameBytes.length + fileBytes.length];
-        payload[0] = (byte) (nameBytes.length >> 24);
-        payload[1] = (byte) (nameBytes.length >> 16);
-        payload[2] = (byte) (nameBytes.length >> 8);
-        payload[3] = (byte) (nameBytes.length);
-        System.arraycopy(nameBytes, 0, payload, 4, nameBytes.length);
-        System.arraycopy(fileBytes, 0, payload, 4 + nameBytes.length, fileBytes.length);
+        ByteBuffer payload = ByteBuffer.allocate(4 + nameBytes.length + 8);
+        payload.putInt(nameBytes.length);
+        payload.put(nameBytes);
+        payload.putLong(fileSize);
 
-        byte[] ciphertext = crypto.encrypt(prependType(TYPE_FILE, payload));
-
+        byte[] ciphertext = crypto.encrypt(prependType(TYPE_FILE_META, payload.array()));
         dOut.writeInt(ciphertext.length);
         dOut.write(ciphertext);
         dOut.flush();
 
-        System.out.println("[Sent file: " + fname + " (" + fileBytes.length + " bytes)]");
+        // Stream file chunks
+        int chunkSize = 1024 * 1024; // 1MB
+        byte[] buffer = new byte[chunkSize];
+        long bytesSent = 0;
+
+        System.out.println("Uploading " + fname + "...");
+
+        try (InputStream fis = Files.newInputStream(path)) {
+            int read;
+            while((read = fis.read(buffer)) > 0) {
+                // Encrypt only read bytes
+                byte[] chunkPayload;
+                if(read == chunkSize) {
+                    chunkPayload = buffer;
+                }
+                else {
+                    chunkPayload = new byte[read];
+                    System.arraycopy(buffer, 0, chunkPayload, 0, read);
+                }
+
+                byte[] chunkCipher = crypto.encrypt(prependType(TYPE_FILE_CHNK, chunkPayload));
+                dOut.writeInt(chunkCipher.length);
+                dOut.write(chunkCipher);
+
+                bytesSent += read;
+                Utils.printProgressBar(bytesSent, fileSize);
+            }
+        }
+
+        dOut.flush();
+        System.out.println("[Sent file: " + fname + " (" + fileSize + " bytes)]");
     }
 
     private byte[] prependType(byte type, byte[] data) {

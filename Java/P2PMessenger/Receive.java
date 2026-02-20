@@ -1,6 +1,8 @@
 import java.io.DataInputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -11,6 +13,10 @@ public class Receive implements Runnable {
     private final DataInputStream dIn;
     private final Crypto crypto;
     private volatile boolean running = true;
+
+    private OutputStream fOut;
+    private long expectedFileSize;
+    private long currentFileBytesReceived;
 
     // Directory where received files are saved
     private static final String DOWNLOAD_DIR = "received_files";
@@ -58,8 +64,10 @@ public class Receive implements Runnable {
 
                 if (type == Send.TYPE_TEXT) {
                     handleText(payload);
-                } else if (type == Send.TYPE_FILE) {
-                    handleFile(payload);
+                } else if (type == Send.TYPE_FILE_CHNK) {
+                    handleFileChunk(payload);
+                } else if (type == Send.TYPE_FILE_META) {
+                    handleFileMeta(payload);
                 } else {
                     System.err.println("[Unknown message type: " + type + "]");
                 }
@@ -77,28 +85,39 @@ public class Receive implements Runnable {
         System.out.print(localName + ": ");
     }
 
-    private void handleFile(byte[] payload) throws Exception {
-        // Parse: [nameLength (4 bytes)][nameBytes][fileBytes]
-        int nameLength = ((payload[0] & 0xFF) << 24)
-                       | ((payload[1] & 0xFF) << 16)
-                       | ((payload[2] & 0xFF) << 8)
-                       |  (payload[3] & 0xFF);
+    private void handleFileMeta(byte[] payload) throws Exception {
+        ByteBuffer buffer = ByteBuffer.wrap(payload);
 
+        int nameLength = buffer.getInt();
         byte[] nameBytes = new byte[nameLength];
-        System.arraycopy(payload, 4, nameBytes, 0, nameLength);
-        String filename = new String(nameBytes, "UTF-8");
+        buffer.get(nameBytes);
+        String currentFileName = new String(nameBytes, "UTF-8");
 
-        int fileLength = payload.length - 4 - nameLength;
-        byte[] fileBytes = new byte[fileLength];
-        System.arraycopy(payload, 4 + nameLength, fileBytes, 0, fileLength);
+        expectedFileSize = buffer.getLong();
+        currentFileBytesReceived = 0;
 
-        // Avoid path traversal: use only the base filename
-        String safeName = Paths.get(filename).getFileName().toString();
+        String safeName = Paths.get(currentFileName).getFileName().toString();
         Path savePath = resolveUnique(Paths.get(DOWNLOAD_DIR, safeName));
-        Files.write(savePath, fileBytes);
 
-        System.out.println("\r[" + peerName + " sent a file: " + safeName + " (" + fileLength + " bytes) -> saved to " + savePath + "]");
-        System.out.print(localName + ": ");
+        fOut = Files.newOutputStream(savePath);
+
+        System.out.print("\r[Receiving file: " + safeName + " (" + expectedFileSize + " bytes)]");
+    }
+
+    private void handleFileChunk(byte[] payload) throws Exception {
+        if(fOut == null) return;
+
+        fOut.write(payload);
+        currentFileBytesReceived += payload.length;
+
+        Utils.printProgressBar(currentFileBytesReceived, expectedFileSize);
+
+        if(currentFileBytesReceived >= expectedFileSize) {
+            fOut.close();
+            fOut = null;
+            System.out.println("\n[File received completely]");
+            System.out.print(localName + ": ");
+        }
     }
 
     /**
