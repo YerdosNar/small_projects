@@ -25,8 +25,10 @@ public class Send implements Runnable {
     @Override
     public void run() {
         try {
+            System.out.print("Your name: ");
+            String yourname = scanner.nextLine();
             while (running) {
-                System.out.print("You: ");
+                System.out.print(yourname + ": ");
                 String message = scanner.nextLine();
 
                 if (message.equalsIgnoreCase("/quit")) {

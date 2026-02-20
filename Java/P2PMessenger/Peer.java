@@ -176,8 +176,8 @@ public class Peer {
             }
             else if (choice == 3) {
                 String vpsIp = "";
-                System.out.print("IP/Domain name [i/D]");
-                String ipOrDomain = sc.next();
+                System.out.print("IP/Domain name [i/D]: ");
+                String ipOrDomain = sc.nextLine();
                 if(ipOrDomain.equalsIgnoreCase("i")) {
                     System.out.print("VPS IP: ");
                     vpsIp = sc.nextLine();
