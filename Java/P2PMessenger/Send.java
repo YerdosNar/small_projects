@@ -131,13 +131,13 @@ public class Send implements Runnable {
 
         dOut.flush();
         System.out.println("\n[Sent file: " + fname + " (" + fileSize + " bytes)]");
-        if(executionTime / 1000 >= 10) {
+        if(executionTime >= 10000) {
             double execTimeDouble = executionTime / 1000.0;
-            if(execTimeDouble / 60 == 1) {
+            if(execTimeDouble >= 60.0) {
                 System.out.printf("Time: %dm %.2fs\n", (int)(execTimeDouble/60), execTimeDouble % 60);
             }
             else {
-                System.out.printf("Time: %.2f s\n", execTimeDouble);
+                System.out.printf("Time: %.2fs\n", execTimeDouble);
             }
         }
         else {
