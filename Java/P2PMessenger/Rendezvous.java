@@ -12,7 +12,7 @@ public class Rendezvous {
 
         ServerSocket server = new ServerSocket(port);
         System.out.println("Rendezvous server listening on port: " + port);
-        System.out.println("Modes: P2P (direct connection) or RELAY (through this server)");
+        System.out.println("Modes: PORT-FORWARD, HOLE-PUNCH, or RELAY");
 
         while (true) {
             System.out.println("\n========== Waiting for two peers ==========");
@@ -20,27 +20,32 @@ public class Rendezvous {
             // Accept first peer
             Socket peer1 = server.accept();
             String addr1 = peer1.getInetAddress().getHostAddress();
-            System.out.println("Peer 1 connected: " + addr1);
+            int natPort1 = peer1.getPort(); // The port the NAT assigned for this connection
+            System.out.println("Peer 1 connected: " + addr1 + ":" + natPort1);
 
             // Accept second peer
             Socket peer2 = server.accept();
             String addr2 = peer2.getInetAddress().getHostAddress();
-            System.out.println("Peer 2 connected: " + addr2);
+            int natPort2 = peer2.getPort();
+            System.out.println("Peer 2 connected: " + addr2 + ":" + natPort2);
 
             DataInputStream in1 = new DataInputStream(peer1.getInputStream());
             DataInputStream in2 = new DataInputStream(peer2.getInputStream());
             DataOutputStream out1 = new DataOutputStream(peer1.getOutputStream());
             DataOutputStream out2 = new DataOutputStream(peer2.getOutputStream());
 
-            // Read if peers can accept connections (have port forwarding)
-            int listenPort1 = in1.readInt();  // 0 = can't listen, >0 = can listen on this port
+            // Read the port each peer claims to have forwarded (0 = none)
+            int listenPort1 = in1.readInt();
             int listenPort2 = in2.readInt();
 
-            System.out.println("Peer 1 listen port: " + (listenPort1 > 0 ? listenPort1 : "none"));
-            System.out.println("Peer 2 listen port: " + (listenPort2 > 0 ? listenPort2 : "none"));
+            boolean pf1 = listenPort1 >= 1024 && listenPort1 <= 65535;
+            boolean pf2 = listenPort2 >= 1024 && listenPort2 <= 65535;
 
-            if (listenPort1 > 0) {
-                // Peer1 can listen, peer2 connects to peer1
+            System.out.println("Peer 1: forwarded=" + (pf1 ? listenPort1 : "none") + " nat_port=" + natPort1);
+            System.out.println("Peer 2: forwarded=" + (pf2 ? listenPort2 : "none") + " nat_port=" + natPort2);
+
+            if (pf1) {
+                // Peer 1 has port forwarding - straightforward P2P
                 out1.writeUTF("LISTEN");
                 out1.writeInt(listenPort1);
                 out1.writeUTF(addr2);
@@ -51,11 +56,10 @@ public class Rendezvous {
                 out2.writeInt(listenPort1);
                 out2.flush();
 
-                System.out.println("Mode: P2P (Peer2 -> Peer1:" + listenPort1 + ")");
+                System.out.println("Mode: PORT-FORWARD (Peer2 -> Peer1:" + listenPort1 + ")");
                 peer1.close();
                 peer2.close();
-            } else if (listenPort2 > 0) {
-                // Peer2 can listen, peer1 connects to peer2
+            } else if (pf2) {
                 out1.writeUTF("CONNECT");
                 out1.writeUTF(addr2);
                 out1.writeInt(listenPort2);
@@ -66,17 +70,48 @@ public class Rendezvous {
                 out2.writeUTF(addr1);
                 out2.flush();
 
-                System.out.println("Mode: P2P (Peer1 -> Peer2:" + listenPort2 + ")");
+                System.out.println("Mode: PORT-FORWARD (Peer1 -> Peer2:" + listenPort2 + ")");
+                peer1.close();
+                peer2.close();
+            } else if (!addr1.equals(addr2)) {
+                // Both behind different NATs - attempt TCP hole punching.
+                //
+                // We tell each peer:
+                //   - the other's external IP:port (as WE observe it - the true NAT mapping)
+                //   - their OWN external port, so they know which local port to rebind to
+                //
+                // Crucially, we flush both at the same time so both peers start
+                // their simultaneous SYN exchange at roughly the same moment.
+                out1.writeUTF("PUNCH");
+                out1.writeUTF(addr2);      // peer2 external IP
+                out1.writeInt(natPort2);   // peer2 external port (true NAT mapping)
+                out1.writeInt(natPort1);   // peer1's OWN external port
+
+                out2.writeUTF("PUNCH");
+                out2.writeUTF(addr1);      // peer1 external IP
+                out2.writeInt(natPort1);   // peer1 external port (true NAT mapping)
+                out2.writeInt(natPort2);   // peer2's OWN external port
+
+                // Flush both simultaneously - timing matters for hole punching
+                out1.flush();
+                out2.flush();
+
+                System.out.println("Mode: HOLE-PUNCH ("
+                    + addr1 + ":" + natPort1 + " <-> "
+                    + addr2 + ":" + natPort2 + ")");
+
+                // Close rendezvous connections - peers are on their own now
                 peer1.close();
                 peer2.close();
             } else {
+                // Same public IP = same LAN, or symmetric NAT - use relay
                 // Neither can listen - RELAY mode
                 out1.writeUTF("RELAY");
                 out1.flush();
                 out2.writeUTF("RELAY");
                 out2.flush();
 
-                System.out.println("Mode: RELAY (both behind NAT)");
+                System.out.println("Mode: RELAY (same public IP or symmetric NAT)");
 
                 // Start relay threads
                 Thread t1 = new Thread(() -> relay(peer1, peer2, "Peer1->Peer2"));

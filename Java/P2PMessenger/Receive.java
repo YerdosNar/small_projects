@@ -50,8 +50,8 @@ public class Receive implements Runnable {
             System.err.println("Failed to read peer name: " + e.getMessage());
         }
 
-        try {
-            while (running) {
+        while (running) {
+            try {
                 int length = dIn.readInt();
                 byte[] encrypted = new byte[length];
                 dIn.readFully(encrypted);
@@ -71,11 +71,11 @@ public class Receive implements Runnable {
                 } else {
                     System.err.println("[Unknown message type: " + type + "]");
                 }
+            } catch (IOException e) {
+                if (running) System.err.println("Connection closed");
+            } catch (Exception e) {
+                if (running) System.err.println("Decrypt error: " + e.getMessage());
             }
-        } catch (IOException e) {
-            if (running) System.err.println("Connection closed");
-        } catch (Exception e) {
-            if (running) System.err.println("Decrypt error: " + e.getMessage());
         }
     }
 

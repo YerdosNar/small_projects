@@ -4,6 +4,8 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
 public class Utils {
+    private static int cachedConsoleWidth = -1;
+
     private static OS getOS() {
         String osName = System.getProperty("os.name").toLowerCase();
         if (osName.contains("win")) {
@@ -54,19 +56,25 @@ public class Utils {
     }
 
     public static int detectConsoleWidth() {
+        if (cachedConsoleWidth > 0) {
+            return cachedConsoleWidth;
+        }
+
         OS os = getOS();
         try {
             switch (os) {
                 case WINDOWS:
-                return getWindowsConsoleWidth();
+                    cachedConsoleWidth = getWindowsConsoleWidth();
                 case UNIX:
-                return getUnixConsoleWidth();
+                    cachedConsoleWidth = getUnixConsoleWidth();
                 default:
-                return -1; // Unknown OS
+                    cachedConsoleWidth = 30; // Unknown OS fallbakc = 30
             }
         } catch (IOException | NumberFormatException e) {
-            return -1; // Command failed or parsing error
+            cachedConsoleWidth = 30; // Command failed or parsing error
         }
+
+        return cachedConsoleWidth;
     }
 
     public static void printProgressBar(long current, long total) {
