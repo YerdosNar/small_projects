@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+if [[ ! -f exe_create || create.c -nt exe_create ]]; then
+    echo "Compiling..."
+    gcc -o exe_create create.c -Wall -Wextra
+else
+    echo "Skipping compilation"
+fi
+
+"Executing..."
+./exe_create "$@"

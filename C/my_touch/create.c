@@ -1,7 +1,14 @@
 #include <stdio.h>
 #include <string.h>
 
+#define KB 1024
+#define MB (KB * 1024)
+#define GB (MB * 1024)
+
 int main(int argc, char **argv) {
+    printf("KB %d\n", KB);
+    printf("MB %d\n", MB);
+    printf("GB %d\n", GB);
     char filename[128];
     size_t file_size;
     char size_form[8];
