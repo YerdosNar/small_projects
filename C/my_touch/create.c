@@ -1,5 +1,5 @@
+#include <ctype.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 typedef unsigned long Ul;
@@ -16,80 +16,85 @@ Ul TB = (Ul)GB * 1024;
 #define Gb Mb * 1024
 Ul Tb = (Ul)Gb * 1024;
 
+// buffer
+#define BUFFER (8 * 1024)
+
+Ul parse_size(const char* size_str) {
+    Ul size = 0;
+    char format = 'B'; // If nothing, then default=bytes
+
+    if (sscanf(size_str, "%lu%c", &size, &format) >= 1) {
+        format = toupper(format);
+        switch (format) {
+            case 'K': return size * KB;
+            case 'M': return size * MB;
+            case 'G': return size * GB;
+            default: return size;
+        }
+    }
+
+    // If nothing worked
+    return 0;
+}
+
+void usage(const char* exec) {
+    printf("Usage: %s <filename.ext> <size>[K|M|G]\n", exec);
+    printf("Example: %s example.pdf 5M\n", exec);
+}
+
 int main(int argc, char **argv) {
-    // printf("KB %d\n", KB);
-    // printf("MB %d\n", MB);
-    // printf("GB %d\n", GB);
-    // printf("TB %lu\n", TB);
-
     char filename[128];
-    int file_size;
-    char size_form[8];
-    char extension[32];
+    Ul file_size;
 
-    if (argc < 7) {
+    if (argc == 1) {
+        usage(argv[0]);
+    }
+    if (argc != 3) {
         printf("Enter filename: ");
         if (fgets(filename, 127, stdin)) {
             filename[strcspn(filename, "\n")] = 0;
         }
 
-        printf("Enter file extension: ");
-        if (fgets(extension, 31, stdin)) {
-            extension[strcspn(extension, "\n")] = 0;
-        }
-
+        char size_str[64];
         printf("Enter file size: ");
-        scanf("%d", &file_size);
-        getchar();
-
-        printf("Enter size format: ");
-        if (fgets(size_form, 7, stdin)) {
-            size_form[strcspn(size_form, "\n")] = 0;
+        if (fgets(size_str, 63, stdin)) {
+            size_str[strcspn(size_str, "\n")] = 0;
         }
+        file_size = parse_size(size_str);
     }
     else {
-        for (int i = 0; i < argc; i++) {
-            if ((!strncmp(argv[i], "-s", 2) || !strncmp(argv[i], "--size", 6)) && i+2 < argc) {
-                file_size = atoi(argv[i+1]);
-                strncpy(argv[i+2], size_form, 7);
-            }
-        }
+        strncpy(filename, argv[1], 127);
+        file_size = parse_size(argv[2]);
     }
 
-    char fullname[161];
-    snprintf(fullname, 160, "%s.%s", filename, extension);
+    printf("Creating file '%s' with size=%lu bytes\n", filename, file_size);
 
-    printf("Creating a file '%s' size=%d%s\n", fullname, file_size, size_form);
-
-    FILE *fp = fopen(fullname, "wb");
+    FILE *fp = fopen(filename, "wb");
     if (!fp) {
         fprintf(stderr, "ERROR: Could not open '%s'\n", filename);
         return 1;
     }
 
-    if (!strncmp(size_form, "K", 1) || !strncmp(size_form, "KB", 2)) {
-        for (size_t i = 0; i < KB; i++) {
-            for (int j = 0; j < file_size; j++) {
-                fwrite("a", 1, 1, fp);
-            }
-            fwrite("\n", 1, 1, fp);
+    char buffer[BUFFER];
+    memset(buffer, 'a', BUFFER);
+
+    Ul bytes_written = 0;
+    while (bytes_written < file_size) {
+        Ul bytes_left = file_size - bytes_written;
+        // If less than 8KB then write that size; else write full 8KB
+        size_t chunk_size = (bytes_left < BUFFER) ? (size_t)bytes_left : BUFFER;
+
+        size_t written = fwrite(buffer, 1, chunk_size, fp);
+        if (written != chunk_size) {
+            fprintf(stderr, "ERROR: I/O failed.\n");
+            fprintf(stdout, "Wrote %lu bytes so far\n", bytes_written);
+            fclose(fp);
+            return 1;
         }
-    }
-    else if (!strncmp(size_form, "M", 1) || !strncmp(size_form, "MB", 2)) {
-        for (size_t i = 0; i < MB; i++) {
-            for (int j = 0; j < file_size; j++) {
-                fwrite("a", 1, 1, fp);
-            }
-            fwrite("\n", 1, 1, fp);
-        }
-    }
-    else if(!strncmp(size_form, "G", 1) || !strncmp(size_form, "GB", 2)) {
-        for (size_t i = 0; i < GB; i++) {
-            for (int j = 0; j < file_size; j++) {
-                fwrite("a", 1, 1, fp);
-            }
-            fwrite("\n", 1, 1, fp);
-        }
+        bytes_written += chunk_size;
     }
     fclose(fp);
+    printf("DONE!\n");
+
+    return 0;
 }
