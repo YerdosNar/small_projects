@@ -2,7 +2,7 @@
 
 if [[ ! -f exe_create || create.c -nt exe_create ]]; then
     echo "Compiling..."
-    gcc -o exe_create create.c -Wall -Wextra
+    gcc -o exe_create create.c -Wall -Wextra -g
 else
     echo "Skipping compilation"
 fi
