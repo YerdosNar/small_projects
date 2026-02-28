@@ -45,11 +45,12 @@ void usage(const char* exec) {
 int main(int argc, char **argv) {
     char filename[128];
     Ul file_size;
+    int set_random = 0;
 
     if (argc == 1) {
         usage(argv[0]);
     }
-    if (argc != 3) {
+    if (argc <= 5) {
         printf("Enter filename: ");
         if (fgets(filename, 127, stdin)) {
             filename[strcspn(filename, "\n")] = 0;
@@ -63,8 +64,16 @@ int main(int argc, char **argv) {
         file_size = parse_size(size_str);
     }
     else {
-        strncpy(filename, argv[1], 127);
-        file_size = parse_size(argv[2]);
+        for (int i = 1; i < argc; i++) {
+            if ((!strncmp("-f", argv[i], 2) || !strncmp("--file", argv[i], 6)) && i+1 < argc) {
+                strncpy(filename, argv[++i], 127);
+            }
+            else if ((!strncmp("-s", argv[i], 2) || !strncmp("--size", argv[i], 6)) && i+1 < argc) {
+                file_size = parse_size(argv[++i]);
+            }
+            else if (!strncmp("-r", argv[i], 2)) set_random = 1;
+            else {fprintf(stderr, "ERROR: unknown arg '%s'\n", argv[i]);}
+        }
     }
 
     printf("Creating file '%s' with size=%lu bytes\n", filename, file_size);
@@ -76,7 +85,18 @@ int main(int argc, char **argv) {
     }
 
     char buffer[BUFFER];
-    memset(buffer, 'a', BUFFER);
+    FILE *src;
+    if (!set_random) {
+        src = fopen("/dev/zero", "rb");
+        if (!src) { fprintf(stderr, "ERROR: Could not open '/dev/zero' for sourcing.\n");return 1;}
+        printf("Filling with /dev/zero\n");
+    }
+    else {
+        src = fopen("/dev/random", "rb");
+        if (!src) { fprintf(stderr, "ERROR: Could not open '/dev/random' for sourcing.\n");return 1;}
+        printf("Filling with /dev/random\n");
+    }
+    fread(buffer, BUFFER, 1, src);
 
     Ul bytes_written = 0;
     while (bytes_written < file_size) {
