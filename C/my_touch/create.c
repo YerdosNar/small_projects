@@ -44,7 +44,7 @@ void usage(const char* exec) {
 
 int main(int argc, char **argv) {
     char filename[128];
-    Ul file_size;
+    Ul file_size = 1024;
     int set_random = 0;
 
     if (argc == 1) {
