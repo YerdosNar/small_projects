@@ -1,11 +1,21 @@
 #!/usr/bin/env bash
 
-if [[ ! -f exe_create || create.c -nt exe_create ]]; then
-    echo "Compiling..."
-    gcc -o exe_create create.c -Wall -Wextra -g
+if [[ "$1" == "-c" || "$1" == "--clean" ]]; then
+    rm *.pdf *.txt exe_create
+elif [[ "$1" == "-o" || "$1" == "--only" ]]; then
+    echo "Only recompiling..."
+    if gcc -o exe_create create.c -Wall -Wextra -g -O3; then
+        echo "execute with ./exe_create <args>"
+    fi
 else
-    echo "Skipping compilation"
+    if [[ ! -f exe_create || create.c -nt exe_create ]]; then
+        echo "Compiling..."
+        gcc -o exe_create create.c -Wall -Wextra -g -O3
+    else
+        echo "Skipping compilation"
+    fi
+
+    echo "Executing..."
+    ./exe_create "$@"
 fi
 
-echo "Executing..."
-./exe_create "$@"
