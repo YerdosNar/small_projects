@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+if [[ "$1" == "-c" || "$1" == "--clean" ]]; then
+    echo "Cleaning..."
+    rm *.pdf *.txt exe_create
+elif [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    echo "Usage: ./run [options]"
+    echo "Options:"
+    echo "  -o, --only            Only compiles, no execute"
+    echo "  -c, --clean           Clean up everything"
+    echo "  -h, --help            Print this message"
+    echo "  [no args]             Compile and execute"
+elif [[ "$1" == "-o" || "$1" == "--only" ]]; then
+    echo "Only recompiling..."
+    if gcc -o exe_create create.c -Wall -Wextra -g -O3; then
+        echo "execute with ./exe_create <args>"
+    fi
+else
+    if [[ ! -f exe_create || create.c -nt exe_create ]]; then
+        echo "Compiling..."
+        gcc -o exe_create create.c -Wall -Wextra -g -O3
+    else
+        echo "Skipping compilation"
+    fi
+
+    echo "Executing..."
+    ./exe_create "$@"
+fi
+
