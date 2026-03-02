@@ -1,5 +1,6 @@
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 typedef unsigned long Ul;
@@ -38,42 +39,53 @@ Ul parse_size(const char* size_str) {
 }
 
 void usage(const char* exec) {
-    printf("Usage: %s <filename.ext> <size>[K|M|G]\n", exec);
+    printf("Usage: %s -f <filename.ext> -s <size>[K|M|G]\n", exec);
+    printf("Options:\n");
+    printf("    -f, --filename <filename>           Name of the file\n");
+    printf("    -s, --size <size>[K|M|G]            Size of a file (default=byte)\n");
+    printf("    -r, --random                        Fill with /dev/random (default=/dev/zero)\n");
+    printf("    -h, --help                          Print this help message\n");
     printf("Example: %s example.pdf 5M\n", exec);
+    exit(0);
 }
 
 int main(int argc, char **argv) {
-    char filename[128];
+    char filename[128] = {0};
     Ul file_size = 1024;
     int set_random = 0;
 
     if (argc == 1) {
         usage(argv[0]);
     }
-    if (argc <= 5) {
+
+    for (int i = 1; i < argc; i++) {
+        if ((!strncmp("-f", argv[i], 2) || !strncmp("--file", argv[i], 6)) && i+1 < argc) {
+            strncpy(filename, argv[++i], 127);
+        }
+        else if ((!strncmp("-s", argv[i], 2) || !strncmp("--size", argv[i], 6)) && i+1 < argc) {
+            file_size = parse_size(argv[++i]);
+        }
+        else if (!strncmp("-h", argv[i], 2) || !strncmp("--help", argv[i], 6))   usage(argv[0]);
+        else if (!strncmp("-r", argv[i], 2) || !strncmp("--random", argv[i], 8)) set_random = 1;
+        else {fprintf(stderr, "ERROR: unknown arg '%s'\n", argv[i]);}
+    }
+
+    if (filename[0] == 0) {
+        fprintf(stderr, "WARN: Filename is not set!\n");
         printf("Enter filename: ");
         if (fgets(filename, 127, stdin)) {
             filename[strcspn(filename, "\n")] = 0;
         }
+    }
 
+    if (file_size == 0) {
+        fprintf(stderr, "WARN: Filesize cannot be zero!\n");
         char size_str[64];
-        printf("Enter file size: ");
+        printf("Enter file size (default=1K): ");
         if (fgets(size_str, 63, stdin)) {
             size_str[strcspn(size_str, "\n")] = 0;
         }
         file_size = parse_size(size_str);
-    }
-    else {
-        for (int i = 1; i < argc; i++) {
-            if ((!strncmp("-f", argv[i], 2) || !strncmp("--file", argv[i], 6)) && i+1 < argc) {
-                strncpy(filename, argv[++i], 127);
-            }
-            else if ((!strncmp("-s", argv[i], 2) || !strncmp("--size", argv[i], 6)) && i+1 < argc) {
-                file_size = parse_size(argv[++i]);
-            }
-            else if (!strncmp("-r", argv[i], 2)) set_random = 1;
-            else {fprintf(stderr, "ERROR: unknown arg '%s'\n", argv[i]);}
-        }
     }
 
     printf("Creating file '%s' with size=%lu bytes\n", filename, file_size);
