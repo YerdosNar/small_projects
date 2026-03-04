@@ -1,0 +1,13 @@
++========================================================================================+
+|    Time     |     MON      |     TUE      |     WED      |     THU      |     FRI      |
++========================================================================================+
+| 09:00-10:00 | Kim  & Oynis | Jeri & Yerdo | Mai  & Thu   | Gue  & Yerim | Yong & Yerdo |
+| 10:00-11:00 | Kim  & Oynis | Jeri & Yerdo | Mai  & Thu   | Gue  & Yerim | Yong & Yerdo |
+| 11:00-12:00 | Kim  & Oynis | Jeri & Yerdo | Mai  & Thu   | Gue  & Yerim | Yong & Yerdo |
+| 12:00-13:00 | Kim  & Oynis | Jeri & Yerdo | Mai  & Thu   | Gue          | Yong & Yerdo |
+| 13:00-14:00 | Yong & Gue   | Yerd & Mai   | Oyni & Lee   | Kim  & Jerin | Thu  & Yerim |
+| 14:00-15:00 | Yong & Gue   | Mai          | Oyni & Lee   | Kim  & Jerin | Thu  & Yerim |
+| 15:00-16:00 | Yong & Gue   | Mai  & Lee   | Oyni & Lee   | Kim  & Jerin | Thu  & Yerim |
+| 16:00-17:00 | Yong & Gue   | Mai  & Lee   | Oyni & Lee   | Kim  & Jerin | Thu  & Yerim |
+| 17:00-18:00 | Yong & Gue   | Mai  & Lee   | Oyni & Lee   | Kim  & Jerin | Thu  & Yerim |
++========================================================================================+
