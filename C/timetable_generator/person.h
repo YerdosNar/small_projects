@@ -13,5 +13,6 @@ typedef struct {
 
 void print_person(Person person);
 Person make_person();
+int share_langs(Person p1, Person p2);
 
 #endif

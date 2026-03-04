@@ -1,4 +1,7 @@
 #include "person.h"
+#include <string.h>
+
+const char *days[] = {"MON", "TUE", "WED", "THU", "FRI"};
 
 // Helper function to clear the input buffer so scanf and fgets play nice
 void clear_buffer() {
@@ -50,7 +53,6 @@ Person make_person() {
     }
 
     printf("\nEnter availability (1 = Available, 0 = Not Available)\n");
-    const char *days[] = {"MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"};
 
     for (int i = 0; i < 5; i++) {
         int is_available;
@@ -60,11 +62,32 @@ Person make_person() {
         if (!is_available) continue; // Skip to next day if not available at all
 
         printf("  Enter 1 or 0 for each hour (9 to 17):\n");
+        int count_hours = 0;
         for (int j = 0; j < 9; j++) {
             printf("    %02d:00 -> ", j + 9);
             scanf("%d", &person.available_days_hours[i][j]);
+            if (person.available_days_hours[i][j]) count_hours++;
         }
+
+        // If less than 3 hours
+        // Set as unavailable in that day
+        if(count_hours < 3) memset(person.available_days_hours[i], 0, sizeof(int) * 9);
     }
     clear_buffer(); // Clean up for the next person's name input
     return person;
+}
+
+
+// Not required!
+// All of them speak one common language
+int share_langs(Person p1, Person p2) {
+    for (int i = 0; i < p1.lang_count; i++) {
+        for (int j = 0; j < p2.lang_count; j++) {
+            if (strcmp(p1.available_lang[i], p2.available_lang[j]) == 0) {
+                return 1;
+            }
+        }
+    }
+
+    return 0;
 }
