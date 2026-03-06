@@ -21,7 +21,7 @@ int parse_int(char*);
  * The function accepts 2D_INTEGER_ARRAY meetings as parameter.
  */
 
-int maximizeNonOverlappingMeetings(int meetings_rows, int meetings_columns, int** meetings) {
+int maximizeNonOverlappingMeetings(int meetings_rows, int** meetings) {
     // sort
     for (int i = 0; i < meetings_rows-1; i++) {
         for (int j = i+1; j < meetings_rows; j++) {
@@ -64,7 +64,7 @@ int main()
         }
     }
 
-    int result = maximizeNonOverlappingMeetings(meetings_rows, meetings_columns, meetings);
+    int result = maximizeNonOverlappingMeetings(meetings_rows, meetings);
 
     printf("%d\n", result);
 
