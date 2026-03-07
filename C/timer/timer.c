@@ -179,46 +179,86 @@ void print_time_up() {
     }
 }
 
-void print_big_timer(int hours, int minutes, int seconds) {
+void print_big_timer(int hours, int minutes, int seconds, int set_bg) {
     system("clear");
     int total = hours * 3600 + minutes * 60 + seconds;
     int x_pos = (width - 8 * 10) / 2;
     int y_pos = (height - 7) / 2;
-    while (total >= 0) {
-        int first_h = hours / 10;
-        int second_h = hours % 10;
-        int first_m = minutes / 10;
-        int second_m = minutes % 10;
-        int first_s = seconds / 10;
-        int second_s = seconds % 10;
-        // printf("%d%d:%d%d:%d%d\n", first_h, second_h, first_m, second_m, first_s, second_s);
-        printf(RED);
-        print_digit(first_h, x_pos, y_pos);
-        print_digit(second_h, x_pos + 11, y_pos);
-        printf(NOC);
-        print_digit(10, x_pos + 22, y_pos);
-        printf(GRN);
-        print_digit(first_m, x_pos + 33, y_pos);
-        print_digit(second_m, x_pos + 44, y_pos);
-        printf(NOC);
-        print_digit(10, x_pos + 55, y_pos);
-        printf(BLU);
-        print_digit(first_s, x_pos + 66, y_pos);
-        print_digit(second_s, x_pos + 77, y_pos);
-        printf(NOC);
-        fflush(stdout);
+    if (set_bg) {
+        while (total >= 0) {
+            int first_h = hours / 10;
+            int second_h = hours % 10;
+            int first_m = minutes / 10;
+            int second_m = minutes % 10;
+            int first_s = seconds / 10;
+            int second_s = seconds % 10;
+            // printf("%d%d:%d%d:%d%d\n", first_h, second_h, first_m, second_m, first_s, second_s);
+            printf(B_RED);
+            print_digit(first_h, x_pos, y_pos);
+            print_digit(second_h, x_pos + 11, y_pos);
+            printf(NOC);
+            print_digit(10, x_pos + 22, y_pos);
+            printf(B_GRN);
+            print_digit(first_m, x_pos + 33, y_pos);
+            print_digit(second_m, x_pos + 44, y_pos);
+            printf(NOC);
+            print_digit(10, x_pos + 55, y_pos);
+            printf(B_BLU);
+            print_digit(first_s, x_pos + 66, y_pos);
+            print_digit(second_s, x_pos + 77, y_pos);
+            printf(NOC);
+            fflush(stdout);
 
-        total--;
-        seconds--;
-        if (seconds < 0) {
-            seconds = 59;
-            minutes--;
-            if (minutes < 0) {
-                minutes = 59;
-                hours--;
+            total--;
+            seconds--;
+            if (seconds < 0) {
+                seconds = 59;
+                minutes--;
+                if (minutes < 0) {
+                    minutes = 59;
+                    hours--;
+                }
             }
+            sleep(1);
         }
-        sleep(1);
+    }
+    else {
+        while (total >= 0) {
+            int first_h = hours / 10;
+            int second_h = hours % 10;
+            int first_m = minutes / 10;
+            int second_m = minutes % 10;
+            int first_s = seconds / 10;
+            int second_s = seconds % 10;
+            // printf("%d%d:%d%d:%d%d\n", first_h, second_h, first_m, second_m, first_s, second_s);
+            printf(RED);
+            print_digit(first_h, x_pos, y_pos);
+            print_digit(second_h, x_pos + 11, y_pos);
+            printf(NOC);
+            print_digit(10, x_pos + 22, y_pos);
+            printf(GRN);
+            print_digit(first_m, x_pos + 33, y_pos);
+            print_digit(second_m, x_pos + 44, y_pos);
+            printf(NOC);
+            print_digit(10, x_pos + 55, y_pos);
+            printf(BLU);
+            print_digit(first_s, x_pos + 66, y_pos);
+            print_digit(second_s, x_pos + 77, y_pos);
+            printf(NOC);
+            fflush(stdout);
+
+            total--;
+            seconds--;
+            if (seconds < 0) {
+                seconds = 59;
+                minutes--;
+                if (minutes < 0) {
+                    minutes = 59;
+                    hours--;
+                }
+            }
+            sleep(1);
+        }
     }
     system("clear");
     print_time_up();
@@ -269,6 +309,8 @@ void usage(char *exe) {
     printf("  -m, --minutes <number>       to set minutes\n");
     printf("  -s, --seconds <number>       to set seconds\n");
     printf("  -n, --no-big                 use small text mode\n");
+    printf("  -b, --background             paint the background\n");
+    printf("  --help                       print this help message\n");
     printf("Example:\n");
     printf("  %s -h 1 -m 10 -s 20\n", exe);
     exit(0);
@@ -292,6 +334,7 @@ int main(int argc, char **argv) {
     minutes = 0,
     seconds = 0;
     int set_big_timer = 1;
+    int set_bg = 0;
 
     if (argc < 2) {
         printf("Enter hours: ");
@@ -343,6 +386,9 @@ int main(int argc, char **argv) {
                     }
                 }
             }
+            else if (!strncmp("-b", argv[i], 2) || !strncmp("--background", argv[i], 12)) {
+                set_bg = 1;
+            }
             else if (!strncmp("-n", argv[i], 2) || !strncmp("--no-big", argv[i], 8)) {
                 if (argc < 3) {
                     printf("Enter hours: ");
@@ -365,7 +411,7 @@ int main(int argc, char **argv) {
         return 0;
     }
     if (set_big_timer) {
-        print_big_timer(hours, minutes, seconds);
+        print_big_timer(hours, minutes, seconds, set_bg);
     }
     else {
         print_small_timer(hours, minutes, seconds);
