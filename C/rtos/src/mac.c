@@ -1,6 +1,5 @@
-#include <stdint.h>
 #include <string.h>
-#include <stdio.h>
+#include "mac.h"
 
 const uint8_t SECRET_KEY[16] = {
     0x01, 0x02, 0x03, 0x04,
