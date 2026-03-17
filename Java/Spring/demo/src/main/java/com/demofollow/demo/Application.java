@@ -41,17 +41,9 @@ public class Application {
 
         // SECTION 3 START
         Person person = context.getBean(Person.class);
-        Parrot parrot = context.getBean(Parrot.class);
 
         System.out.println("Person's name: " + person.getName());
-        System.out.println("Parrot's name: " + parrot.getName());
         System.out.println(person.getName() + "'s parrort: " + person.getParrot());
-        if (parrot.equals(person.getParrot())) {
-            System.out.println("One parrot.");
-        }
-        else {
-            System.out.println("Two parrots.");
-        }
         // SECTION 3 END
 
         context.close();

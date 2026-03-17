@@ -1,10 +1,13 @@
 package com.demofollow.demo;
 
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+@ComponentScan(basePackages = "beans")
 public class ProjectConfig {
+
     @Bean
     public Parrot parrot() {
         Parrot p = new Parrot();
@@ -14,9 +17,8 @@ public class ProjectConfig {
 
     @Bean
     public Person person() {
-        Person p = new Person();
+        Person p = new Person(parrot());
         p.setName("Ella");
-        p.setParrot(parrot());
         return p;
     }
 }

@@ -6,11 +6,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class Parrot {
-    private String name;
-
-    public Parrot() {
-        System.out.println("Parrot object created.");
-    }
+    private String name = "Kiki";
 
     // @PostConstruct
     // public void init() {this.name = "Kiki";}
