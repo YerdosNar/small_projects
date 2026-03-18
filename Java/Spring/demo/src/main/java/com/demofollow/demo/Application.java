@@ -40,10 +40,12 @@ public class Application {
         // SECTION 2 END
 
         // SECTION 3 START
-        Person person = context.getBean(Person.class);
-
-        System.out.println("Person's name: " + person.getName());
-        System.out.println(person.getName() + "'s parrort: " + person.getParrot());
+        // Parrot parrot = context.getBean(Parrot.class);
+        // Person person = context.getBean(Person.class);
+        //
+        // System.out.println(parrot);
+        // System.out.println(person);
+        // System.out.println(person.getName() + "'s parrort: " + person.getParrot());
         // SECTION 3 END
 
         context.close();
