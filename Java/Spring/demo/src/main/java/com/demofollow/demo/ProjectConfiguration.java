@@ -1,12 +1,5 @@
 package com.demofollow.demo;
 
-import com.demofollow.demo.proxies.CommentNotificationProxy;
-import com.demofollow.demo.proxies.CommentPushNotificationProxy;
-import com.demofollow.demo.proxies.EmailCommentNotificationProxy;
-import com.demofollow.demo.repositories.CommentRepository;
-import com.demofollow.demo.repositories.DBCommentRepository;
-import com.demofollow.demo.services.CommentService;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
