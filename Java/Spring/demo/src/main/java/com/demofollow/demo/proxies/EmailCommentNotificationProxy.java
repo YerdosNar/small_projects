@@ -11,7 +11,7 @@ import com.demofollow.demo.models.Comment;
 @Component
 @Qualifier("EMAIL")
 public class EmailCommentNotificationProxy
-    implements CommentNotificationProxy {
+        implements CommentNotificationProxy {
 
     @Override
     public void sendComment(Comment comment) {

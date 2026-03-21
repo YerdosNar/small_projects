@@ -1,12 +1,10 @@
 package com.demofollow.demo.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import com.demofollow.demo.models.Comment;
-import com.demofollow.demo.proxies.CommentNotificationProxy;
-import com.demofollow.demo.repositories.CommentRepository;
+import com.demofollow.demo.processor.CommentProcessor;
 
 /**
  * CommentService
@@ -15,23 +13,13 @@ import com.demofollow.demo.repositories.CommentRepository;
 public class CommentService {
 
     @Autowired
-    private CommentRepository commentRepository;
-    private final CommentNotificationProxy commentNotificationProxy;
+    private CommentProcessor p;
 
-    public CommentService(
-            CommentRepository commentRepository,
-            @Qualifier("PUSH")CommentNotificationProxy commentNotificationProxy) {
+    public void sendComment(Comment c) {
+        p.setComment(c);
+        p.processComment();
+        p.validateComment();
 
-        this.commentRepository = commentRepository;
-        this.commentNotificationProxy = commentNotificationProxy;
-    }
-
-    public CommentRepository getCommentRepository() {
-        return commentRepository;
-    }
-
-    public void publishComment(Comment comment) {
-        commentRepository.storeComment(comment);
-        commentNotificationProxy.sendComment(comment);
+        c = p.getComment();
     }
 }
