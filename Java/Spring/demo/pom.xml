@@ -63,6 +63,14 @@
             <scope>compile</scope>
         </dependency>
 
+        <!-- Source: https://mvnrepository.com/artifact/org.springframework/spring-aspects -->
+    <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-aspects</artifactId>
+        <version>7.0.6</version>
+        <scope>compile</scope>
+    </dependency>
+
 	</dependencies>
 
 	<build>

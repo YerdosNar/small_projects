@@ -1,10 +1,10 @@
 package com.demofollow.demo.services;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import java.util.logging.Logger;
+
 import org.springframework.stereotype.Service;
 
 import com.demofollow.demo.models.Comment;
-import com.demofollow.demo.processor.CommentProcessor;
 
 /**
  * CommentService
@@ -12,14 +12,10 @@ import com.demofollow.demo.processor.CommentProcessor;
 @Service
 public class CommentService {
 
-    @Autowired
-    private CommentProcessor p;
+    private Logger logger =
+        Logger.getLogger(CommentService.class.getName());
 
-    public void sendComment(Comment c) {
-        p.setComment(c);
-        p.processComment();
-        p.validateComment();
-
-        c = p.getComment();
+    public void publishComment(Comment comment) {
+        logger.info("Publishing comment: "+comment.getText());
     }
 }
