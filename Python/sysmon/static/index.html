@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SysMon // Admin Console</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #00ff88;
+    --green-dim: #00cc66;
+    --green-glow: rgba(0,255,136,0.15);
+    --green-dark: rgba(0,255,136,0.05);
+    --red: #ff3355;
+    --yellow: #ffcc00;
+    --cyan: #00ddff;
+    --bg: #030a05;
+    --bg2: #060e08;
+    --bg3: #0a1a0d;
+    --border: rgba(0,255,136,0.2);
+    --text: #b0ffcc;
+    --text-dim: #557766;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Share Tech Mono', monospace;
+    background: var(--bg);
+    color: var(--green);
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+  }
+
+  /* CRT scanline overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.08) 2px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  /* Vignette */
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.6) 100%);
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  /* Matrix rain canvas */
+  #matrix-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 16px;
+  }
+
+  /* ─── HEADER ─── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--green), transparent);
+    animation: scanH 3s linear infinite;
+  }
+  @keyframes scanH {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  .logo {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: 4px;
+    color: var(--green);
+    text-shadow: 0 0 20px var(--green), 0 0 40px rgba(0,255,136,0.3);
+  }
+  .logo span { color: var(--cyan); }
+
+  .header-meta {
+    display: flex;
+    gap: 24px;
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .header-meta .val { color: var(--green); }
+
+  .status-dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse 1.5s ease-in-out infinite;
+    margin-right: 6px;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* ─── GRID ─── */
+  .grid-top {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .grid-mid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .grid-bottom {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* ─── PANEL ─── */
+  .panel {
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    padding: 14px 16px;
+    position: relative;
+    transition: border-color 0.3s;
+  }
+  .panel:hover {
+    border-color: rgba(0,255,136,0.5);
+    box-shadow: 0 0 20px var(--green-glow);
+  }
+  .panel-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .panel-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ─── STAT CARDS ─── */
+  .stat-value {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 36px;
+    font-weight: 900;
+    line-height: 1;
+    margin-bottom: 4px;
+    transition: color 0.5s;
+  }
+  .stat-label {
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    margin-bottom: 14px;
+  }
+  .stat-sub {
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+  .stat-sub span { color: var(--text); }
+
+  /* ─── GAUGE BAR ─── */
+  .gauge-track {
+    width: 100%;
+    height: 4px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    margin: 6px 0;
+    overflow: hidden;
+    position: relative;
+  }
+  .gauge-fill {
+    height: 100%;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.5s;
+    position: relative;
+  }
+  .gauge-fill::after {
+    content: '';
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    width: 4px;
+    background: white;
+    opacity: 0.8;
+    filter: blur(1px);
+  }
+  .gauge-fill.ok { background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .gauge-fill.warn { background: var(--yellow); box-shadow: 0 0 8px var(--yellow); }
+  .gauge-fill.crit { background: var(--red); box-shadow: 0 0 8px var(--red); }
+
+  /* ─── CORE GRID ─── */
+  .cores-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
+    gap: 4px;
+    margin-top: 8px;
+  }
+  .core-cell {
+    height: 36px;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: flex-end;
+    padding: 2px;
+    font-size: 7px;
+    color: var(--text-dim);
+    position: relative;
+    overflow: hidden;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+  .core-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    transition: height 0.8s ease;
+  }
+  .core-pct {
+    position: relative;
+    z-index: 1;
+    font-size: 7px;
+  }
+
+  /* ─── DISK ─── */
+  .disk-row {
+    margin-bottom: 10px;
+  }
+  .disk-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    margin-bottom: 3px;
+    color: var(--text);
+  }
+  .disk-header .mount { color: var(--cyan); }
+  .disk-header .size { color: var(--text-dim); }
+
+  /* ─── NETWORK ─── */
+  .net-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .net-stat { text-align: center; }
+  .net-val {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--cyan);
+    text-shadow: 0 0 10px var(--cyan);
+  }
+  .net-lbl {
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+  }
+  .iface-list {
+    margin-top: 10px;
+    font-size: 10px;
+  }
+  .iface-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+    border-bottom: 1px solid rgba(0,255,136,0.07);
+    color: var(--text-dim);
+  }
+  .iface-row .iname { color: var(--text); }
+
+  /* ─── PROCESS TABLE ─── */
+  .proc-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+  }
+  .proc-table th {
+    text-align: left;
+    padding: 6px 8px;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--border);
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 400;
+  }
+  .proc-table th.r { text-align: right; }
+  .proc-table td {
+    padding: 5px 8px;
+    border-bottom: 1px solid rgba(0,255,136,0.05);
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+  }
+  .proc-table td.r { text-align: right; }
+  .proc-table tr:hover td { background: var(--green-dark); color: var(--green); }
+  .proc-table .pid { color: var(--text-dim); font-size: 10px; }
+  .proc-cpu { color: var(--green) !important; font-family: 'Orbitron', sans-serif; font-size: 10px; }
+  .proc-mem { color: var(--cyan) !important; font-family: 'Orbitron', sans-serif; font-size: 10px; }
+  .proc-status-running { color: var(--green) !important; }
+  .proc-status-sleeping { color: var(--text-dim) !important; }
+  .proc-status-zombie { color: var(--red) !important; }
+
+  /* ─── UPTIME ─── */
+  .uptime-display {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 14px;
+    color: var(--cyan);
+    letter-spacing: 2px;
+    text-align: center;
+    padding: 8px 0;
+    text-shadow: 0 0 12px var(--cyan);
+  }
+
+  /* ─── FOOTER ─── */
+  .refresh-bar {
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 10px;
+    color: var(--text-dim);
+  }
+  .refresh-progress {
+    flex: 1;
+    height: 2px;
+    background: var(--bg3);
+    overflow: hidden;
+  }
+  .refresh-fill {
+    height: 100%;
+    background: var(--green-dim);
+    width: 0%;
+    transition: width 0.1s linear;
+  }
+
+  /* ─── GLITCH ─── */
+  .glitch {
+    animation: glitch 0.1s ease-in-out;
+  }
+  @keyframes glitch {
+    0% { transform: translate(0); }
+    20% { transform: translate(-2px, 1px); filter: hue-rotate(90deg); }
+    40% { transform: translate(2px, -1px); }
+    60% { transform: translate(-1px, 2px); filter: hue-rotate(-90deg); }
+    100% { transform: translate(0); filter: none; }
+  }
+
+  /* ─── COLOR CLASSES ─── */
+  .c-green { color: var(--green); }
+  .c-cyan  { color: var(--cyan);  }
+  .c-yellow{ color: var(--yellow);}
+  .c-red   { color: var(--red);   }
+
+  @media (max-width: 1100px) {
+    .grid-top { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 700px) {
+    .grid-top, .grid-mid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="matrix-canvas"></canvas>
+
+<div class="wrapper">
+  <!-- HEADER -->
+  <header>
+    <div class="logo">SYS<span>MON</span></div>
+    <div class="header-meta">
+      <div><span class="status-dot"></span><span class="val" id="h-status">ONLINE</span></div>
+      <div>UPTIME <span class="val" id="h-uptime">--:--:--</span></div>
+      <div>UPDATED <span class="val" id="h-time">--:--:--</span></div>
+    </div>
+  </header>
+
+  <!-- TOP ROW: 4 STAT CARDS -->
+  <div class="grid-top">
+    <!-- CPU -->
+    <div class="panel" id="cpu-card">
+      <div class="panel-title">// CPU</div>
+      <div class="stat-value c-green" id="cpu-pct">0<span style="font-size:18px">%</span></div>
+      <div class="stat-label">PROCESSOR LOAD</div>
+      <div class="gauge-track"><div class="gauge-fill ok" id="cpu-bar" style="width:0%"></div></div>
+      <div class="stat-sub">
+        <span id="cpu-cores">?</span> CORES &nbsp;|&nbsp; <span id="cpu-freq">?</span> MHz
+      </div>
+      <div class="cores-grid" id="cores-grid"></div>
+    </div>
+
+    <!-- RAM -->
+    <div class="panel" id="ram-card">
+      <div class="panel-title">// MEMORY</div>
+      <div class="stat-value c-cyan" id="ram-pct">0<span style="font-size:18px">%</span></div>
+      <div class="stat-label">RAM UTILIZATION</div>
+      <div class="gauge-track"><div class="gauge-fill ok" id="ram-bar" style="width:0%"></div></div>
+      <div class="stat-sub">
+        USED <span id="ram-used">?</span> / <span id="ram-total">?</span>
+      </div>
+      <div style="margin-top:12px; font-size:10px; color:var(--text-dim)">
+        SWAP <span id="swap-pct" class="c-yellow">0%</span> &nbsp;·&nbsp;
+        <span id="swap-used">?</span> / <span id="swap-total">?</span>
+      </div>
+      <div class="gauge-track" style="margin-top:4px">
+        <div class="gauge-fill warn" id="swap-bar" style="width:0%"></div>
+      </div>
+    </div>
+
+    <!-- DISK (first) -->
+    <div class="panel" id="disk-card">
+      <div class="panel-title">// STORAGE</div>
+      <div id="disks-container"></div>
+    </div>
+
+    <!-- NETWORK -->
+    <div class="panel" id="net-card">
+      <div class="panel-title">// NETWORK</div>
+      <div class="net-grid">
+        <div class="net-stat">
+          <div class="net-val" id="net-recv">—</div>
+          <div class="net-lbl">▼ RECEIVED</div>
+        </div>
+        <div class="net-stat">
+          <div class="net-val" id="net-sent">—</div>
+          <div class="net-lbl">▲ SENT</div>
+        </div>
+      </div>
+      <div class="net-grid" style="margin-top:10px">
+        <div class="net-stat">
+          <div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--text)" id="net-pkts-in">—</div>
+          <div class="net-lbl">PKTS IN</div>
+        </div>
+        <div class="net-stat">
+          <div style="font-family:'Orbitron',sans-serif;font-size:12px;color:var(--text)" id="net-pkts-out">—</div>
+          <div class="net-lbl">PKTS OUT</div>
+        </div>
+      </div>
+      <div class="iface-list" id="iface-list"></div>
+    </div>
+  </div>
+
+  <!-- PROCESS TABLE -->
+  <div class="grid-bottom">
+    <div class="panel">
+      <div class="panel-title">// PROCESSES <span style="color:var(--text);margin-left:4px" id="proc-count"></span></div>
+      <div style="overflow-x:auto">
+        <table class="proc-table">
+          <thead>
+            <tr>
+              <th>PID</th>
+              <th>NAME</th>
+              <th>USER</th>
+              <th>STATUS</th>
+              <th class="r">CPU%</th>
+              <th class="r">MEM%</th>
+            </tr>
+          </thead>
+          <tbody id="proc-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="refresh-bar">
+    <span>REFRESH</span>
+    <div class="refresh-progress"><div class="refresh-fill" id="refresh-fill"></div></div>
+    <span id="refresh-countdown">2s</span>
+  </div>
+</div>
+
+<script>
+// ─── MATRIX RAIN ───────────────────────────────────
+const canvas = document.getElementById('matrix-canvas');
+const ctx = canvas.getContext('2d');
+let drops = [];
+function initMatrix() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const cols = Math.floor(canvas.width / 18);
+  drops = Array(cols).fill(1);
+}
+function drawMatrix() {
+  ctx.fillStyle = 'rgba(3,10,5,0.05)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#00ff88';
+  ctx.font = '14px Share Tech Mono';
+  drops.forEach((y, i) => {
+    const char = String.fromCharCode(0x30A0 + Math.random() * 96);
+    ctx.fillText(char, i * 18, y * 18);
+    if (y * 18 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+    drops[i]++;
+  });
+}
+initMatrix();
+window.addEventListener('resize', initMatrix);
+setInterval(drawMatrix, 60);
+
+// ─── HELPERS ──────────────────────────────────────
+function colorClass(pct) {
+  if (pct < 60) return 'ok';
+  if (pct < 85) return 'warn';
+  return 'crit';
+}
+function setBar(id, pct) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.width = pct + '%';
+  el.className = 'gauge-fill ' + colorClass(pct);
+}
+function setVal(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+function setColor(id, pct) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (pct < 60) el.className = el.className.replace(/c-\w+/, '') + ' c-green';
+  else if (pct < 85) el.className = el.className.replace(/c-\w+/, '') + ' c-yellow';
+  else el.className = el.className.replace(/c-\w+/, '') + ' c-red';
+}
+
+// ─── RENDER ───────────────────────────────────────
+function render(data) {
+  // Header
+  const t = new Date(data.timestamp);
+  document.getElementById('h-time').textContent = t.toLocaleTimeString();
+  document.getElementById('h-uptime').textContent = data.uptime;
+
+  // CPU
+  const cpuPct = data.cpu.total;
+  document.getElementById('cpu-pct').innerHTML = Math.round(cpuPct) + '<span style="font-size:18px">%</span>';
+  setBar('cpu-bar', cpuPct);
+  setVal('cpu-cores', data.cpu.count);
+  setVal('cpu-freq', data.cpu.freq_current);
+
+  // Per-core
+  const cg = document.getElementById('cores-grid');
+  if (cg.children.length !== data.cpu.per_core.length) {
+    cg.innerHTML = data.cpu.per_core.map((_, i) =>
+      `<div class="core-cell">
+        <div class="core-bar" id="core-${i}" style="background:var(--green);opacity:0.7"></div>
+        <div class="core-pct" id="core-p-${i}">0</div>
+      </div>`
+    ).join('');
+  }
+  data.cpu.per_core.forEach((p, i) => {
+    const bar = document.getElementById(`core-${i}`);
+    const pct = document.getElementById(`core-p-${i}`);
+    if (bar) { bar.style.height = p + '%'; bar.style.background = p > 85 ? 'var(--red)' : p > 60 ? 'var(--yellow)' : 'var(--green)'; }
+    if (pct) pct.textContent = Math.round(p);
+  });
+
+  // RAM
+  const ramPct = data.memory.percent;
+  document.getElementById('ram-pct').innerHTML = Math.round(ramPct) + '<span style="font-size:18px">%</span>';
+  setBar('ram-bar', ramPct);
+  setVal('ram-used', data.memory.used);
+  setVal('ram-total', data.memory.total);
+  setVal('swap-pct', data.memory.swap_percent + '%');
+  setVal('swap-used', data.memory.swap_used);
+  setVal('swap-total', data.memory.swap_total);
+  setBar('swap-bar', data.memory.swap_percent);
+
+  // Disks
+  const dc = document.getElementById('disks-container');
+  dc.innerHTML = data.disks.map(d => `
+    <div class="disk-row">
+      <div class="disk-header">
+        <span class="mount">${d.mountpoint}</span>
+        <span class="size">${d.used} / ${d.total}</span>
+      </div>
+      <div class="gauge-track">
+        <div class="gauge-fill ${colorClass(d.percent)}" style="width:${d.percent}%"></div>
+      </div>
+      <div style="font-size:9px;color:var(--text-dim);display:flex;justify-content:space-between">
+        <span>${d.fstype} · ${d.device.split('/').pop()}</span>
+        <span class="${d.percent > 85 ? 'c-red' : d.percent > 60 ? 'c-yellow' : 'c-green'}">${d.percent}%</span>
+      </div>
+    </div>
+  `).join('');
+
+  // Network
+  setVal('net-recv', data.network.bytes_recv);
+  setVal('net-sent', data.network.bytes_sent);
+  setVal('net-pkts-in', data.network.packets_recv.toLocaleString());
+  setVal('net-pkts-out', data.network.packets_sent.toLocaleString());
+  const il = document.getElementById('iface-list');
+  const ifaces = Object.entries(data.network.interfaces);
+  il.innerHTML = ifaces.length ? ifaces.map(([name, ip]) =>
+    `<div class="iface-row"><span class="iname">${name}</span><span>${ip}</span></div>`
+  ).join('') : '<div style="color:var(--text-dim);font-size:10px">no interfaces</div>';
+
+  // Processes
+  const tbody = document.getElementById('proc-tbody');
+  document.getElementById('proc-count').textContent = `[${data.processes.length}]`;
+  tbody.innerHTML = data.processes.map(p => {
+    const statusClass = p.status === 'running' ? 'proc-status-running' :
+                        p.status === 'zombie'  ? 'proc-status-zombie'  : 'proc-status-sleeping';
+    return `<tr>
+      <td class="pid">${p.pid}</td>
+      <td>${(p.name || '?').substring(0,28)}</td>
+      <td style="color:var(--text-dim)">${(p.username || '?').substring(0,12)}</td>
+      <td class="${statusClass}">${p.status || '?'}</td>
+      <td class="r proc-cpu">${p.cpu_percent.toFixed(1)}</td>
+      <td class="r proc-mem">${p.memory_percent.toFixed(2)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── FETCH LOOP ───────────────────────────────────
+const INTERVAL = 2000;
+let countdown = INTERVAL;
+let fillInterval;
+
+async function fetchStats() {
+  try {
+    const res = await fetch('/api/stats');
+    const data = await res.json();
+    render(data);
+    document.getElementById('h-status').textContent = 'ONLINE';
+    document.getElementById('h-status').style.color = 'var(--green)';
+  } catch(e) {
+    document.getElementById('h-status').textContent = 'OFFLINE';
+    document.getElementById('h-status').style.color = 'var(--red)';
+  }
+}
+
+function startRefreshBar() {
+  clearInterval(fillInterval);
+  const fill = document.getElementById('refresh-fill');
+  const cd = document.getElementById('refresh-countdown');
+  let start = Date.now();
+  fillInterval = setInterval(() => {
+    const elapsed = Date.now() - start;
+    const pct = Math.min((elapsed / INTERVAL) * 100, 100);
+    fill.style.width = pct + '%';
+    const rem = Math.max(0, Math.ceil((INTERVAL - elapsed) / 1000));
+    cd.textContent = rem + 's';
+    if (elapsed >= INTERVAL) {
+      start = Date.now();
+      fetchStats();
+    }
+  }, 100);
+}
+
+fetchStats();
+startRefreshBar();
+</script>
+</body>
+</html>
