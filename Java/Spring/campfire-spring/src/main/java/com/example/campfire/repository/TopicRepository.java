@@ -3,6 +3,7 @@ package com.example.campfire.repository;
 import com.example.campfire.entity.Topic;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -16,8 +17,8 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface TopicRepository extends JpaRepository<Topic, UUID> {
 
-        // SELECT * FROM topics WHERE ttl < <ttl>
-        Optional<Topic> findByTtlBefore(LocalDateTime time);
-
         Optional<Topic> findByTopicHash(String hash);
+
+        // SELECT * FROM topics WHERE ttl < <ttl>
+        List<Topic> findByTtlBefore(LocalDateTime time);
 }

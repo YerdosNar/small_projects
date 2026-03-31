@@ -6,6 +6,7 @@ import com.example.campfire.entity.User;
 import com.example.campfire.repository.UserRepository;
 import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.UUID;
@@ -13,6 +14,7 @@ import java.util.UUID;
 /**
  * UserService
  */
+@Service
 public class UserService {
 
         private final UserRepository userRepository;

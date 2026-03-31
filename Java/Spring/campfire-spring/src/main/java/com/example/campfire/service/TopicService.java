@@ -46,7 +46,7 @@ public class TopicService {
                 topic.setOwner(owner);
                 topic.setContent(request.content());
                 topic.setTopicHash(hash);
-                topic.setTtl(LocalDateTime.now().plusHours(1));
+                topic.setTtl(LocalDateTime.now().plusMinutes(1));
 
                 Topic savedTopic = topicRepository.save(topic);
                 return mapToResponse(savedTopic);
