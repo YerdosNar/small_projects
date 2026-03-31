@@ -23,7 +23,7 @@ import jakarta.validation.Valid;
  * CommentController
  */
 @RestController
-@RequestMapping("/topics/{topic_id}/comments")
+@RequestMapping("/topics/{topicId}/comments")
 public class CommentController {
 
         private final CommentService commentService;
