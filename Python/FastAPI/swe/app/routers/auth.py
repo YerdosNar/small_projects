@@ -1,3 +1,4 @@
+from uuid import uuid4
 from fastapi import APIRouter, HTTPException, status
 from app.models import db, User
 from app.schemas import UserRegister, UserOut, UserLogin, Token
@@ -8,7 +9,10 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 
 # --- Register ---
 
-@router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/register",
+    response_model=UserOut,
+    status_code=status.HTTP_201_CREATED)
 def register(payload: UserRegister):
     # Check username availability
     for user in db["users"].values():
@@ -18,11 +22,13 @@ def register(payload: UserRegister):
                 detail="Username already taken"
             )
 
+    new_user_id = uuid4()
     new_user = User(
+        id=new_user_id,
         username=payload.username,
         hashed_password=hash_password(payload.password)
     )
-    db["users"][new_user.id] = new_user
+    db["users"][new_user_id] = new_user
     return new_user
 
 

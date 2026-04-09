@@ -9,9 +9,11 @@ class UserRegister(BaseModel):
     username: str = Field(..., max_length=127)
     password: str
 
+
 class UserLogin(BaseModel):
     username: str
     password: str
+
 
 class UserOut(BaseModel):
     id: UUID
@@ -30,6 +32,7 @@ class Token(BaseModel):
 class TopicCreate(BaseModel):
     content: str = Field(..., max_length=127)
 
+
 class TopicOut(BaseModel):
     id: UUID
     owner_id: UUID
@@ -42,6 +45,7 @@ class TopicOut(BaseModel):
 
 class CommentCreate(BaseModel):
     content: str = Field(..., max_length=1023)
+
 
 class CommentOut(BaseModel):
     id: UUID

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Campfire | Keep the Topics Burning</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div id="toast-container"></div>
+
+    <!-- Authentication Section -->
+    <main id="auth-section" class="auth-wrapper">
+        <div class="glass-panel text-center">
+            <h1 class="logo-text">Campfire</h1>
+            <p class="subtitle">Log in or register automatically</p>
+            <form id="auth-form">
+                <div class="input-group">
+                    <input type="text" id="username" placeholder="Username" required maxlength="127">
+                </div>
+                <div class="input-group">
+                    <input type="password" id="password" placeholder="Password" required>
+                </div>
+                <button type="submit" class="btn btn-primary" id="btn-login">Join the Fire</button>
+            </form>
+        </div>
+    </main>
+
+    <!-- Main Application Section -->
+    <main id="app-section" class="app-wrapper hidden">
+        <header class="app-header glass-panel">
+            <h1 class="logo-text sm">Campfire</h1>
+            <div class="user-menu">
+                <span id="current-user-display"></span>
+                <button id="btn-logout" class="btn btn-outline">Leave</button>
+            </div>
+        </header>
+
+        <section class="create-topic-section glass-panel">
+            <h2>Start a new fire</h2>
+            <form id="create-topic-form">
+                <textarea id="topic-content" rows="3" placeholder="What do you want to talk about?" required></textarea>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-flame">Ignite Topic</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="active-topics-section">
+            <div class="section-header">
+                <h2>Active Campfires</h2>
+                <div class="flame-icon">🔥 <span id="active-count">0</span></div>
+            </div>
+            
+            <div id="topics-container" class="topics-grid">
+                <!-- Topics will be injected here dynamically -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Comments Modal -->
+    <div id="comments-modal" class="modal hidden">
+        <div class="modal-content glass-panel">
+            <button id="close-modal" class="btn-close">&times;</button>
+            <h3 class="modal-topic-content" id="modal-topic-text"></h3>
+            <div class="modal-meta">
+                <span id="modal-time-left" class="time-left"></span>
+            </div>
+            
+            <div id="comments-list" class="comments-list">
+                <!-- Comments injected here -->
+            </div>
+
+            <form id="add-comment-form" class="comment-input-area">
+                <input type="text" id="comment-input" placeholder="Add fuel to the fire (Comment)..." required>
+                <button type="submit" class="btn btn-flame btn-sm">Add Fuel</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Templates for JS rendering -->
+    <template id="topic-card-template">
+        <div class="topic-card glass-panel interactive">
+            <div class="topic-content"></div>
+            <div class="topic-meta">
+                <div class="topic-timer">
+                    <span class="icon">⏱</span> <span class="time-value"></span>
+                </div>
+                <div class="topic-comments-count">
+                    <span class="icon">💬</span> <span class="comments-value"></span>
+                </div>
+            </div>
+            <div class="topic-flame-indicator"></div>
+        </div>
+    </template>
+    
+    <template id="comment-template">
+        <div class="comment-item">
+            <div class="comment-user">User <span class="user-id-short"></span></div>
+            <div class="comment-text"></div>
+        </div>
+    </template>
+
+    <script src="/js/app.js"></script>
+</body>
+</html>

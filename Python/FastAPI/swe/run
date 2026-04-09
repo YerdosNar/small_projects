@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+activate() {
+        for activation in "venv/bin/activate" ".venv/bin/activate"; do
+                if [ -f $activation ]; then
+                        echo "Found in $activation"
+                        echo "Activating..."
+                        source "$activation"
+                        return
+                fi
+        done
+        echo "Activation not found..."
+        exit 1
+}
+
+if [ ! -n "$VIRTUAL_ENV" ]; then
+        echo "VENV is not active"
+
+        echo "Looking for activation"
+        activate
+fi
+
+echo "Running 'uvicorn app.main:app --reload'"
+uvicorn app.main:app --reload
