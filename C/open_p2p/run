@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+
+gcc -o exe peer.c -Wall -Wextra -lsodium
+./exe
