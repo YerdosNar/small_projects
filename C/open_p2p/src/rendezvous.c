@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 int main() {
-	printf("Peer\n");
+	printf("Rendezvous.\n");
 
 	return 0;
 }
