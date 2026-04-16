@@ -6,6 +6,8 @@
 #include <netinet/in.h>
 #include <unistd.h>
 
+#include "../include/netio.h"
+
 #define PORT 8888
 #define BACKLOG 8
 

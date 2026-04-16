@@ -5,9 +5,40 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <string.h>
+#include <netdb.h>
+#include <errno.h>
+
+#include "../include/netio.h"
 
 #define SERVER_IP "127.0.0.1"
 #define SERVER_PORT 8888
+
+static int resolve_domain_name(const char *domain, char *out_ip, size_t out_len)
+{
+	struct addrinfo hints = {0};
+	struct addrinfo *res = NULL;
+
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_STREAM;
+
+	int rc = getaddrinfo(domain, NULL, &hints, &res);
+	if (rc != 0) {
+		fprintf(stderr, "ERROR: resolve_domain_name: getaddrinfo(%s): %s\n",
+				domain, gai_strerror(rc));
+		return -1;
+	}
+
+	struct sockaddr_in *sa = (struct sockaddr_in *)res->ai_addr;
+	if (inet_ntop(AF_INET, &sa->sin_addr, out_ip, out_len) == NULL) {
+		perror("inet_ntop");
+		freeaddrinfo(res);
+		return -1;
+	}
+
+	freeaddrinfo(res);
+	return 0;
+}
 
 int connect_to_server(const char *ip, uint16_t port) {
 	int fd;
@@ -36,8 +67,18 @@ int connect_to_server(const char *ip, uint16_t port) {
 	return fd;
 }
 
-int main() {
-	char *server_ip = SERVER_IP;
+int main(int argc, char **argv) {
+	char server_ip[INET_ADDRSTRLEN];
+
+	if (argc >= 2) {
+		if (resolve_domain_name(argv[1], server_ip, sizeof(server_ip)) < 0) {
+			exit(EXIT_FAILURE);
+		}
+	}
+	else {
+		strncpy(server_ip, SERVER_IP, sizeof(server_ip));
+		server_ip[sizeof(server_ip) - 1] = '\0';
+	}
 	uint16_t port = SERVER_PORT;
 	int fd = connect_to_server(server_ip, port);
 	printf("Peer: connected to %s:%d (fd=%d)\n",
