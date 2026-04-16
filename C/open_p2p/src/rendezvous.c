@@ -82,8 +82,8 @@ int main(void) {
 		goto fail;
 	}
 
-	print_hex("Rendezvous pk (ours):  ", spk, sizeof(spk));
-	print_hex("Peer pk (theirs)    :  ", cpk, sizeof(cpk));
+	print_hex("Rendezvous pk (ours)", spk, sizeof(spk));
+	print_hex("Peer pk (theirs)    ", cpk, sizeof(cpk));
 
 	uint8_t rx[SESKB];
 	uint8_t tx[SESKB];
