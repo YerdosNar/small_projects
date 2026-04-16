@@ -93,26 +93,61 @@ int main(void) {
 	uint8_t rx[crypto_kx_SESSIONKEYBYTES];
 	uint8_t tx[crypto_kx_SESSIONKEYBYTES];
 
-	int32_t cmp = memcmp(spk, cpk, crypto_kx_PUBLICKEYBYTES);
-	if (cmp > 0) {
-		if (crypto_kx_server_session_keys(rx, tx, spk, ssk, cpk) != 0) {
-			fprintf(stderr, "ERROR: crypto_kx_server_session_keys failed (bad peer pk)\n");
-			close(client_fd);
-			close(l_fd);
-			exit(EXIT_FAILURE);
-		}
-	} else if (cmp < 0) {
-		if (crypto_kx_client_session_keys(rx, tx, spk, ssk, cpk) != 0) {
-			fprintf(stderr, "ERROR: crypto_kx_client_session_keys failed (bad peer pk)\n");
-			close(client_fd);
-			close(l_fd);
-			exit(EXIT_FAILURE);
-		}
+	if (crypto_kx_server_session_keys(rx, tx, spk, ssk, cpk) != 0) {
+		fprintf(stderr, "ERROR: crypto_kx_server_session_keys failed (bad peer pk)\n");
+		close(client_fd);
+		close(l_fd);
+		exit(EXIT_FAILURE);
 	}
 	sodium_memzero(ssk, sizeof(ssk));
 
-	print_hex("rx (server receives on) : ", rx, sizeof(rx));
-	print_hex("tx (server transmits on): ", tx, sizeof(tx));
+	print_hex("rx (server receives on)  ", rx, sizeof(rx));
+	print_hex("tx (server transmits on) ", tx, sizeof(tx));
+
+	crypto_secretstream_xchacha20poly1305_state tx_state;
+	uint8_t header[crypto_secretstream_xchacha20poly1305_HEADERBYTES];
+
+	if (crypto_secretstream_xchacha20poly1305_init_push(&tx_state, header, tx) != 0) {
+		fprintf(stderr, "ERROR: secretstream_init_push() failed.\n");
+		close(client_fd);
+		close(l_fd);
+		exit(EXIT_FAILURE);
+	}
+
+	if (write_all(client_fd, header, sizeof(header)) < 0) {
+		perror("write_all(header)");
+		close(client_fd);
+		close(l_fd);
+		exit(EXIT_FAILURE);
+	}
+
+	const char *msg = "hello from rendezvous";
+	size_t msg_len = strlen(msg);
+
+	uint8_t ctext[1024];
+	unsigned long long clen;
+
+	if (crypto_secretstream_xchacha20poly1305_push(
+				&tx_state,
+				ctext, &clen,
+				(const uint8_t *)msg, msg_len,
+				NULL, 0,
+				0) != 0) {
+		fprintf(stderr, "ERROR: secretstream push failed\n");
+		close(client_fd);
+		close(l_fd);
+		exit(EXIT_FAILURE);
+	}
+
+	if (write_frame(client_fd, ctext, (uint32_t)clen) < 0) {
+		perror("write_frame(ctext)");
+		close(client_fd);
+		close(l_fd);
+		exit(EXIT_FAILURE);
+	}
+
+	printf("Rendezvous: sent encrypted message (%zu bytes plaintext, %llu bytes ciphertext)\n", 
+			msg_len, clen);
 
 	close(client_fd);
 	close(l_fd);

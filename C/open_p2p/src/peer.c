@@ -82,8 +82,7 @@ int main(int argc, char **argv) {
 		}
 	}
 	else {
-		strncpy(server_ip, SERVER_IP, sizeof(server_ip));
-		server_ip[sizeof(server_ip) - 1] = '\0';
+		snprintf(server_ip, sizeof(server_ip), "%s", SERVER_IP);
 	}
 
 	uint16_t port = SERVER_PORT;
@@ -115,24 +114,56 @@ int main(int argc, char **argv) {
 	uint8_t rx[crypto_kx_SESSIONKEYBYTES];
 	uint8_t tx[crypto_kx_SESSIONKEYBYTES];
 
-	int32_t cmp = memcmp(cpk, spk, crypto_kx_PUBLICKEYBYTES);
-	if (cmp > 0) {
-		if (crypto_kx_server_session_keys(rx, tx, cpk, csk, spk) != 0) {
-			fprintf(stderr, "ERROR: crypto_kx_server_session_keys failed (bad peer pk)\n");
-			close(fd);
-			exit(EXIT_FAILURE);
-		}
-	} else if (cmp < 0) {
-		if (crypto_kx_client_session_keys(rx, tx, cpk, csk, spk) != 0) {
-			fprintf(stderr, "ERROR: crypto_kx_client_session_keys failed (bad peer pk)\n");
-			close(fd);
-			exit(EXIT_FAILURE);
-		}
+	if (crypto_kx_client_session_keys(rx, tx, cpk, csk, spk) != 0) {
+		fprintf(stderr, "ERROR: crypto_kx_client_session_keys failed (bad peer pk)\n");
+		close(fd);
+		exit(EXIT_FAILURE);
 	}
 	sodium_memzero(csk, sizeof(csk));
 
-	print_hex("rx (server receives on) : ", rx, sizeof(rx));
-	print_hex("tx (server transmits on): ", tx, sizeof(tx));
+	print_hex("rx (client receives on)  ", rx, sizeof(rx));
+	print_hex("tx (client transmits on) ", tx, sizeof(tx));
+
+	crypto_secretstream_xchacha20poly1305_state rx_state;
+	uint8_t header[crypto_secretstream_xchacha20poly1305_HEADERBYTES];
+
+	if (read_all(fd, header, sizeof(header)) < 0) {
+		perror("read_all(header)");
+		close(fd);
+		exit(EXIT_FAILURE);
+	}
+
+	if (crypto_secretstream_xchacha20poly1305_init_pull(&rx_state, header, rx) != 0) {
+		fprintf(stderr, "ERROR: secretstream_init_pull() failed.\n");
+		close(fd);
+		exit(EXIT_FAILURE);
+	}
+
+	uint8_t ctext[1024];
+	uint32_t clen;
+	if (read_frame(fd, ctext, sizeof(ctext), &clen) < 0) {
+		perror("read_frame(ctext)");
+		close(fd);
+		exit(EXIT_FAILURE);
+	}
+
+	uint8_t ptext[1024];
+	unsigned long long plen;
+	uint8_t tag;
+
+	if (crypto_secretstream_xchacha20poly1305_pull(
+				&rx_state,
+				ptext, &plen,
+				&tag,
+				ctext, clen,
+				NULL, 0) != 0) {
+		fprintf(stderr, "ERROR: secretstream_pull() failed (tampered or wrong key)\n");
+		close(fd);
+		exit(EXIT_FAILURE);
+	}
+
+	printf("Peer: decrypted message (%llu bytes): \"%.*s\" (tag=%u)\n",
+			plen, (int)plen, ptext, tag);
 
 	close(fd);
 	return 0;
