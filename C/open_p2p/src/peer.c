@@ -69,8 +69,9 @@ int connect_to_server(const char *ip, uint16_t port) {
 }
 
 int main(int argc, char **argv) {
-	char server_ip[INET_ADDRSTRLEN];
+	if (crypto_init()) exit(EXIT_FAILURE);
 
+	char server_ip[INET_ADDRSTRLEN];
 	if (argc >= 2) {
 		if (resolve_domain_name(argv[1], server_ip, sizeof(server_ip)) < 0) {
 			exit(EXIT_FAILURE);
@@ -117,42 +118,23 @@ int main(int argc, char **argv) {
 	}
 	sodium_memzero(csk, sizeof(csk));
 
-	crypto_secretstream_xchacha20poly1305_state rx_state;
-	uint8_t header[crypto_secretstream_xchacha20poly1305_HEADERBYTES];
+	encrypted_channel ch;
+	if (crypto_channel_init(&ch, fd, tx, rx) < 0) goto fail;
 
-	if (read_all(fd, header, sizeof(header)) < 0) {
-		perror("read_all(header)");
-		goto fail;
-	}
+	sodium_memzero(rx, sizeof(rx));
+	sodium_memzero(tx, sizeof(tx));
 
-	if (crypto_secretstream_xchacha20poly1305_init_pull(&rx_state, header, rx) != 0) {
-		fprintf(stderr, "ERROR: secretstream_init_pull() failed.\n");
-		goto fail;
-	}
-
-	uint8_t ctext[1024];
-	uint32_t clen;
-	if (read_frame(fd, ctext, sizeof(ctext), &clen) < 0) {
-		perror("read_frame(ctext)");
-		goto fail;
-	}
-
-	uint8_t ptext[1024];
-	unsigned long long plen;
+	uint8_t buf[1024];
 	uint8_t tag;
+	int n = crypto_channel_recv(&ch, fd, buf, sizeof(buf) - 1, &tag);
+	if (n < 0) goto fail;
+	buf[n] = '\0';
+	printf("Peer: received '%s' (tag=%u)\n", buf, tag);
 
-	if (crypto_secretstream_xchacha20poly1305_pull(
-				&rx_state,
-				ptext, &plen,
-				&tag,
-				ctext, clen,
-				NULL, 0) != 0) {
-		fprintf(stderr, "ERROR: secretstream_pull() failed (tampered or wrong key)\n");
-		goto fail;
-	}
-
-	printf("Peer: decrypted message (%llu bytes): \"%.*s\" (tag=%u)\n",
-			plen, (int)plen, ptext, tag);
+	const char *reply = "hello from peer";
+	if (crypto_channel_send(&ch, fd,
+				(const uint8_t *)reply, strlen(reply), 0) < 0) goto fail;
+	printf("Peer: sent '%s'\n", reply);
 
 	close(fd);
 	return 0;

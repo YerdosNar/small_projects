@@ -36,6 +36,8 @@ int setup_listen_fd(uint16_t port) {
 }
 
 int main(void) {
+	if (crypto_init()) exit(EXIT_FAILURE);
+
 	uint16_t port = PORT;
 	int l_fd = setup_listen_fd(port);
 	if (listen(l_fd, BACKLOG) < 0) {
@@ -94,42 +96,23 @@ int main(void) {
 	}
 	sodium_memzero(ssk, sizeof(ssk));
 
-	crypto_secretstream_xchacha20poly1305_state tx_state;
-	uint8_t header[crypto_secretstream_xchacha20poly1305_HEADERBYTES];
+	encrypted_channel ch;
+	if (crypto_channel_init(&ch, client_fd, tx, rx) < 0) goto fail;
 
-	if (crypto_secretstream_xchacha20poly1305_init_push(&tx_state, header, tx) != 0) {
-		fprintf(stderr, "ERROR: secretstream_init_push() failed.\n");
-		goto fail;
-	}
-
-	if (write_all(client_fd, header, sizeof(header)) < 0) {
-		perror("write_all(header)");
-		goto fail;
-	}
+	sodium_memzero(rx, sizeof(rx));
+	sodium_memzero(tx, sizeof(tx));
 
 	const char *msg = "hello from rendezvous";
-	size_t msg_len = strlen(msg);
+	if (crypto_channel_send(&ch, client_fd,
+				(const uint8_t *)msg, strlen(msg), 0) < 0) goto fail;
+	printf("Rendezvous: send '%s'\n", msg);
 
-	uint8_t ctext[1024];
-	unsigned long long clen;
-
-	if (crypto_secretstream_xchacha20poly1305_push(
-				&tx_state,
-				ctext, &clen,
-				(const uint8_t *)msg, msg_len,
-				NULL, 0,
-				0) != 0) {
-		fprintf(stderr, "ERROR: secretstream push failed\n");
-		goto fail;
-	}
-
-	if (write_frame(client_fd, ctext, (uint32_t)clen) < 0) {
-		perror("write_frame(ctext)");
-		goto fail;
-	}
-
-	printf("Rendezvous: sent encrypted message (%zu bytes plaintext, %llu bytes ciphertext)\n", 
-			msg_len, clen);
+	uint8_t buf[1024];
+	uint8_t tag;
+	int n = crypto_channel_recv(&ch, client_fd, buf, sizeof(buf) - 1, &tag);
+	if (n < 0) goto fail;
+	buf[n] = '\0';
+	printf("Rendezvous: received '%s' (tag=%u)\n", buf, tag);
 
 	close(client_fd);
 	close(l_fd);
