@@ -6,6 +6,7 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include <sodium.h>
+#include <string.h>
 
 #include "../include/netio.h"
 
@@ -72,7 +73,7 @@ int main(void) {
 
 	crypto_kx_keypair(spk, ssk);
 
-	if (write_all(client_fd, ssk, sizeof(spk)) < 0) {
+	if (write_all(client_fd, spk, sizeof(spk)) < 0) {
 		perror("write_all(spk)");
 		close(client_fd);
 		close(l_fd);
@@ -86,10 +87,32 @@ int main(void) {
 		exit(EXIT_FAILURE);
 	}
 
-	print_hex("Rendezvous pk (ours)", spk, sizeof(spk));
-	print_hex("Peer pk (theis)     ", cpk, sizeof(cpk));
+	print_hex("Rendezvous pk (ours):  ", spk, sizeof(spk));
+	print_hex("Peer pk (theirs)    :  ", cpk, sizeof(cpk));
 
+	uint8_t rx[crypto_kx_SESSIONKEYBYTES];
+	uint8_t tx[crypto_kx_SESSIONKEYBYTES];
+
+	int32_t cmp = memcmp(spk, cpk, crypto_kx_PUBLICKEYBYTES);
+	if (cmp > 0) {
+		if (crypto_kx_server_session_keys(rx, tx, spk, ssk, cpk) != 0) {
+			fprintf(stderr, "ERROR: crypto_kx_server_session_keys failed (bad peer pk)\n");
+			close(client_fd);
+			close(l_fd);
+			exit(EXIT_FAILURE);
+		}
+	} else if (cmp < 0) {
+		if (crypto_kx_client_session_keys(rx, tx, spk, ssk, cpk) != 0) {
+			fprintf(stderr, "ERROR: crypto_kx_client_session_keys failed (bad peer pk)\n");
+			close(client_fd);
+			close(l_fd);
+			exit(EXIT_FAILURE);
+		}
+	}
 	sodium_memzero(ssk, sizeof(ssk));
+
+	print_hex("rx (server receives on) : ", rx, sizeof(rx));
+	print_hex("tx (server transmits on): ", tx, sizeof(tx));
 
 	close(client_fd);
 	close(l_fd);
