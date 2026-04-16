@@ -1,0 +1,18 @@
+1. P1 connects to Rendezvous.
+2. P1 sends its public key to rendezvous, rendezvous sends its public key to P1.
+3. Both derive shared secret key form each other's public key.
+4. They establish E2EE using #include <sodium.h>. Now traffic is encrypted.
+5. Rendezvous asks "Are you [H]ost or [J]oin [h/j]: ".
+6. P1 answers 'h' meaning, he will be the host.
+7. Rendezvous asks, "Enter HostRoom ID: ", "Enter HostRoom PW: ". It will be used for authentication.
+8. After P1 stays in the server for 3 minutes (180 seconds). Either someone connects within 3 minutes, or the room will be deleted.
+
+1. P2 connects to Rendezvous.
+2. P2 sends its public key to rendezvous, rendezvous sends its public key to P2.
+3. Both derive shared secret key form each other's public key.
+4. They establish E2EE using #include <sodium.h>. Now traffic is encrypted.
+5. Rendezvous asks "Are you [H]ost or [J]oin [h/j]: ".
+6. P2 answers 'j' meaning, he will join hosted room.
+7. Rendezvous asks, "Enter HostRoom ID: ", "Enter HostRoom PW: ".
+8. If the room with that ID and PW exists, then Rendezvous sends P1 P2's IP:Port:PubKey, and sends P2 P1's IP:Port:PubKey. Otherwise, P2 gets kicked.
+9. After both peers find each others IP:Port:PubKey, Rendezvous deletes room information, both peers, clears everything.
