@@ -5,6 +5,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <sodium.h>
 
 #include "../include/netio.h"
 
@@ -33,6 +34,11 @@ int setup_listen_fd(uint16_t port) {
 }
 
 int main(void) {
+	if (sodium_init() < 0) {
+		fprintf(stderr, "ERROR: main->sodium_init() failed.\n");
+		exit(EXIT_FAILURE);
+	}
+
 	uint16_t port = PORT;
 	int l_fd = setup_listen_fd(port);
 	if (listen(l_fd, BACKLOG) < 0) {
@@ -46,13 +52,13 @@ int main(void) {
 	struct sockaddr_in ca = {0};
 	socklen_t client_len = sizeof(ca);
 	char client_ip[INET_ADDRSTRLEN];
+
 	int client_fd = accept(l_fd, (struct sockaddr *)&ca, &client_len);
 	if (client_fd < 0) {
 		perror("accept");
 		close(l_fd);
 		exit(EXIT_FAILURE);
 	}
-
 	if (inet_ntop(AF_INET, &ca.sin_addr, client_ip, sizeof(client_ip)) == NULL) {
 		perror("inet_ntop");
 	} else {
@@ -60,6 +66,32 @@ int main(void) {
 				client_ip, ntohs(ca.sin_port), client_fd);
 	}
 
+	uint8_t spk[crypto_kx_PUBLICKEYBYTES];
+	uint8_t ssk[crypto_kx_SECRETKEYBYTES];
+	uint8_t cpk[crypto_kx_PUBLICKEYBYTES];
+
+	crypto_kx_keypair(spk, ssk);
+
+	if (write_all(client_fd, ssk, sizeof(spk)) < 0) {
+		perror("write_all(spk)");
+		close(client_fd);
+		close(l_fd);
+		exit(EXIT_FAILURE);
+	}
+
+	if (read_all(client_fd, cpk, sizeof(cpk)) < 0) {
+		perror("read_all(cpk)");
+		close(client_fd);
+		close(l_fd);
+		exit(EXIT_FAILURE);
+	}
+
+	print_hex("Rendezvous pk (ours)", spk, sizeof(spk));
+	print_hex("Peer pk (theis)     ", cpk, sizeof(cpk));
+
+	sodium_memzero(ssk, sizeof(ssk));
+
+	close(client_fd);
 	close(l_fd);
 	return 0;
 }

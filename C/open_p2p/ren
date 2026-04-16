@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
-gcc -o exe_ren src/rendezvous.c -Wall -Wextra -lsodium
+gcc -o exe_ren src/rendezvous.c src/netio.c -lsodium -Wall -Wextra -lsodium
 ./exe_ren
