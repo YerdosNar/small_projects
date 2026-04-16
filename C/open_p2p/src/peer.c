@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
+#include <netinet/in.h> 
 #include <arpa/inet.h>
 #include <string.h>
 #include <netdb.h>
@@ -90,18 +90,19 @@ int main(int argc, char **argv) {
 	uint8_t spk[PUBKB];
 
 	// init sodium and generate keys
-	crypto_keygen(cpk, csk);
+	if (crypto_keygen(cpk, csk)) {
+		fprintf(stderr, "ERROR: main->crypto_keygen() failed.\n");
+		goto fail;
+	}
 
 	if (read_all(fd, spk, sizeof(spk)) < 0) {
 		perror("read_all(server_pk)");
-		close(fd);
-		exit(EXIT_FAILURE);
+		goto fail;
 	}
 
 	if (write_all(fd, cpk, sizeof(cpk)) < 0) {
 		perror("write_all(server_pk)");
-		close(fd);
-		exit(EXIT_FAILURE);
+		goto fail;
 	}
 
 	print_hex("Peer pk (ours)	 : ", cpk, sizeof(cpk));
@@ -110,9 +111,9 @@ int main(int argc, char **argv) {
 	uint8_t rx[SESKB];
 	uint8_t tx[SESKB];
 
-	if (!crypto_derivekeys(rx, tx, cpk, csk, spk)) {
+	if (crypto_derivekeys(rx, tx, cpk, csk, spk)) {
 		fprintf(stderr, "ERROR: main()->crypto_derivekeys() failed.\n");
-		exit(EXIT_FAILURE);
+		goto fail;
 	}
 	sodium_memzero(csk, sizeof(csk));
 
@@ -121,22 +122,19 @@ int main(int argc, char **argv) {
 
 	if (read_all(fd, header, sizeof(header)) < 0) {
 		perror("read_all(header)");
-		close(fd);
-		exit(EXIT_FAILURE);
+		goto fail;
 	}
 
 	if (crypto_secretstream_xchacha20poly1305_init_pull(&rx_state, header, rx) != 0) {
 		fprintf(stderr, "ERROR: secretstream_init_pull() failed.\n");
-		close(fd);
-		exit(EXIT_FAILURE);
+		goto fail;
 	}
 
 	uint8_t ctext[1024];
 	uint32_t clen;
 	if (read_frame(fd, ctext, sizeof(ctext), &clen) < 0) {
 		perror("read_frame(ctext)");
-		close(fd);
-		exit(EXIT_FAILURE);
+		goto fail;
 	}
 
 	uint8_t ptext[1024];
@@ -150,8 +148,7 @@ int main(int argc, char **argv) {
 				ctext, clen,
 				NULL, 0) != 0) {
 		fprintf(stderr, "ERROR: secretstream_pull() failed (tampered or wrong key)\n");
-		close(fd);
-		exit(EXIT_FAILURE);
+		goto fail;
 	}
 
 	printf("Peer: decrypted message (%llu bytes): \"%.*s\" (tag=%u)\n",
@@ -159,4 +156,8 @@ int main(int argc, char **argv) {
 
 	close(fd);
 	return 0;
+
+fail:
+	close(fd);
+	exit(EXIT_FAILURE);
 }

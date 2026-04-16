@@ -66,7 +66,7 @@ int main(void) {
 	uint8_t spk[PUBKB];
 	uint8_t ssk[SECKB];
 	uint8_t cpk[PUBKB];
-	if (!crypto_keygen(spk, ssk)) {
+	if (crypto_keygen(spk, ssk)) {
 		fprintf(stderr, "ERROR: main()->crypto_keygen() failed.\n");
 		close(l_fd);
 		exit(EXIT_FAILURE);
@@ -74,16 +74,12 @@ int main(void) {
 
 	if (write_all(client_fd, spk, sizeof(spk)) < 0) {
 		perror("write_all(spk)");
-		close(client_fd);
-		close(l_fd);
-		exit(EXIT_FAILURE);
+		goto fail;
 	}
 
 	if (read_all(client_fd, cpk, sizeof(cpk)) < 0) {
 		perror("read_all(cpk)");
-		close(client_fd);
-		close(l_fd);
-		exit(EXIT_FAILURE);
+		goto fail;
 	}
 
 	print_hex("Rendezvous pk (ours):  ", spk, sizeof(spk));
@@ -92,11 +88,9 @@ int main(void) {
 	uint8_t rx[SESKB];
 	uint8_t tx[SESKB];
 
-	if (!crypto_derivekeys(rx, tx, spk, ssk, cpk)) {
+	if (crypto_derivekeys(rx, tx, spk, ssk, cpk)) {
 		fprintf(stderr, "ERROR: crypto_kx_server_session_keys failed (bad peer pk)\n");
-		close(client_fd);
-		close(l_fd);
-		exit(EXIT_FAILURE);
+		goto fail;
 	}
 	sodium_memzero(ssk, sizeof(ssk));
 
@@ -105,16 +99,12 @@ int main(void) {
 
 	if (crypto_secretstream_xchacha20poly1305_init_push(&tx_state, header, tx) != 0) {
 		fprintf(stderr, "ERROR: secretstream_init_push() failed.\n");
-		close(client_fd);
-		close(l_fd);
-		exit(EXIT_FAILURE);
+		goto fail;
 	}
 
 	if (write_all(client_fd, header, sizeof(header)) < 0) {
 		perror("write_all(header)");
-		close(client_fd);
-		close(l_fd);
-		exit(EXIT_FAILURE);
+		goto fail;
 	}
 
 	const char *msg = "hello from rendezvous";
@@ -130,16 +120,12 @@ int main(void) {
 				NULL, 0,
 				0) != 0) {
 		fprintf(stderr, "ERROR: secretstream push failed\n");
-		close(client_fd);
-		close(l_fd);
-		exit(EXIT_FAILURE);
+		goto fail;
 	}
 
 	if (write_frame(client_fd, ctext, (uint32_t)clen) < 0) {
 		perror("write_frame(ctext)");
-		close(client_fd);
-		close(l_fd);
-		exit(EXIT_FAILURE);
+		goto fail;
 	}
 
 	printf("Rendezvous: sent encrypted message (%zu bytes plaintext, %llu bytes ciphertext)\n", 
@@ -148,4 +134,9 @@ int main(void) {
 	close(client_fd);
 	close(l_fd);
 	return 0;
+
+fail:
+	close(client_fd);
+	close(l_fd);
+	exit(EXIT_FAILURE);
 }
