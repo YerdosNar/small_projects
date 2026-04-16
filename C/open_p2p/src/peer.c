@@ -106,9 +106,6 @@ int main(int argc, char **argv) {
 		goto fail;
 	}
 
-	print_hex("Peer pk (ours)	 ", cpk, sizeof(cpk));
-	print_hex("Rendezvous pk (theirs)", spk, sizeof(spk));
-
 	uint8_t rx[SESKB];
 	uint8_t tx[SESKB];
 
