@@ -9,6 +9,7 @@
 #include <string.h>
 
 #include "../include/netio.h"
+#include "../include/crypto.h"
 
 #define PORT 8888
 #define BACKLOG 8
@@ -35,11 +36,6 @@ int setup_listen_fd(uint16_t port) {
 }
 
 int main(void) {
-	if (sodium_init() < 0) {
-		fprintf(stderr, "ERROR: main->sodium_init() failed.\n");
-		exit(EXIT_FAILURE);
-	}
-
 	uint16_t port = PORT;
 	int l_fd = setup_listen_fd(port);
 	if (listen(l_fd, BACKLOG) < 0) {
@@ -67,11 +63,14 @@ int main(void) {
 				client_ip, ntohs(ca.sin_port), client_fd);
 	}
 
-	uint8_t spk[crypto_kx_PUBLICKEYBYTES];
-	uint8_t ssk[crypto_kx_SECRETKEYBYTES];
-	uint8_t cpk[crypto_kx_PUBLICKEYBYTES];
-
-	crypto_kx_keypair(spk, ssk);
+	uint8_t spk[PUBKB];
+	uint8_t ssk[SECKB];
+	uint8_t cpk[PUBKB];
+	if (!crypto_keygen(spk, ssk)) {
+		fprintf(stderr, "ERROR: main()->crypto_keygen() failed.\n");
+		close(l_fd);
+		exit(EXIT_FAILURE);
+	}
 
 	if (write_all(client_fd, spk, sizeof(spk)) < 0) {
 		perror("write_all(spk)");
@@ -90,19 +89,16 @@ int main(void) {
 	print_hex("Rendezvous pk (ours):  ", spk, sizeof(spk));
 	print_hex("Peer pk (theirs)    :  ", cpk, sizeof(cpk));
 
-	uint8_t rx[crypto_kx_SESSIONKEYBYTES];
-	uint8_t tx[crypto_kx_SESSIONKEYBYTES];
+	uint8_t rx[SESKB];
+	uint8_t tx[SESKB];
 
-	if (crypto_kx_server_session_keys(rx, tx, spk, ssk, cpk) != 0) {
+	if (!crypto_derivekeys(rx, tx, spk, ssk, cpk)) {
 		fprintf(stderr, "ERROR: crypto_kx_server_session_keys failed (bad peer pk)\n");
 		close(client_fd);
 		close(l_fd);
 		exit(EXIT_FAILURE);
 	}
 	sodium_memzero(ssk, sizeof(ssk));
-
-	print_hex("rx (server receives on)  ", rx, sizeof(rx));
-	print_hex("tx (server transmits on) ", tx, sizeof(tx));
 
 	crypto_secretstream_xchacha20poly1305_state tx_state;
 	uint8_t header[crypto_secretstream_xchacha20poly1305_HEADERBYTES];

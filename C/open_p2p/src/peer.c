@@ -8,9 +8,9 @@
 #include <string.h>
 #include <netdb.h>
 #include <errno.h>
-#include <sodium.h>
 
 #include "../include/netio.h"
+#include "../include/crypto.h"
 
 #define SERVER_IP "127.0.0.1"
 #define SERVER_PORT 8888
@@ -69,11 +69,6 @@ int connect_to_server(const char *ip, uint16_t port) {
 }
 
 int main(int argc, char **argv) {
-	if (sodium_init() < 0) {
-		fprintf(stderr, "ERROR: main->sodium_init() failed.\n");
-		exit(EXIT_FAILURE);
-	}
-
 	char server_ip[INET_ADDRSTRLEN];
 
 	if (argc >= 2) {
@@ -90,11 +85,12 @@ int main(int argc, char **argv) {
 	printf("Peer: connected to %s:%d (fd=%d)\n",
 			server_ip, port, fd);
 
-	uint8_t cpk[crypto_kx_PUBLICKEYBYTES];
-	uint8_t csk[crypto_kx_SECRETKEYBYTES];
-	uint8_t spk[crypto_kx_PUBLICKEYBYTES];
+	uint8_t cpk[PUBKB];
+	uint8_t csk[SECKB];
+	uint8_t spk[PUBKB];
 
-	crypto_kx_keypair(cpk, csk);
+	// init sodium and generate keys
+	crypto_keygen(cpk, csk);
 
 	if (read_all(fd, spk, sizeof(spk)) < 0) {
 		perror("read_all(server_pk)");
@@ -111,18 +107,14 @@ int main(int argc, char **argv) {
 	print_hex("Peer pk (ours)	 : ", cpk, sizeof(cpk));
 	print_hex("Rendezvous pk (theirs): ", spk, sizeof(spk));
 
-	uint8_t rx[crypto_kx_SESSIONKEYBYTES];
-	uint8_t tx[crypto_kx_SESSIONKEYBYTES];
+	uint8_t rx[SESKB];
+	uint8_t tx[SESKB];
 
-	if (crypto_kx_client_session_keys(rx, tx, cpk, csk, spk) != 0) {
-		fprintf(stderr, "ERROR: crypto_kx_client_session_keys failed (bad peer pk)\n");
-		close(fd);
+	if (!crypto_derivekeys(rx, tx, cpk, csk, spk)) {
+		fprintf(stderr, "ERROR: main()->crypto_derivekeys() failed.\n");
 		exit(EXIT_FAILURE);
 	}
 	sodium_memzero(csk, sizeof(csk));
-
-	print_hex("rx (client receives on)  ", rx, sizeof(rx));
-	print_hex("tx (client transmits on) ", tx, sizeof(tx));
 
 	crypto_secretstream_xchacha20poly1305_state rx_state;
 	uint8_t header[crypto_secretstream_xchacha20poly1305_HEADERBYTES];
