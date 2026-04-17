@@ -35,6 +35,22 @@ int setup_listen_fd(uint16_t port) {
 	return l_fd;
 }
 
+static int send_prompt(encrypted_channel *ch, int fd,
+		const char *prompt,
+		char *buf, size_t max_len) {
+	if (crypto_channel_send(ch, fd,
+				(const uint8_t*)prompt, strlen(prompt), 0) < 0) {
+		return -1;
+	}
+
+	uint8_t tag;
+	int n = crypto_channel_recv(ch, fd, (uint8_t*)buf, max_len - 1, &tag);
+	if (n < 0) return -1;
+	buf[n] = '\0';
+
+	return n;
+}
+
 int main(void) {
 	if (crypto_init()) exit(EXIT_FAILURE);
 
@@ -99,17 +115,19 @@ int main(void) {
 	sodium_memzero(rx, sizeof(rx));
 	sodium_memzero(tx, sizeof(tx));
 
-	const char *msg = "hello from rendezvous";
-	if (crypto_channel_send(&ch, client_fd,
-				(const uint8_t *)msg, strlen(msg), 0) < 0) goto fail;
-	printf("Rendezvous: send '%s'\n", msg);
-
-	uint8_t buf[1024];
-	uint8_t tag;
-	int n = crypto_channel_recv(&ch, client_fd, buf, sizeof(buf) - 1, &tag);
+	char answer[256];
+	int n = send_prompt(&ch, client_fd,
+			"Are you [H]ost or [J]oin? [h/j]: ",
+			answer, sizeof(answer));
 	if (n < 0) goto fail;
-	buf[n] = '\0';
-	printf("Rendezvous: received '%s' (tag=%u)\n", buf, tag);
+
+	if (answer[0] == 'h' || answer[0] == 'H') {
+		printf("Rendezvous: peer chose HOST\n");
+	} else if (answer[0] == 'j' || answer[0] == 'J') {
+		printf("Rendezvous: peer chose JOIN\n");
+	} else {
+		printf("Rendezvous: invalid choice '%s'\n", answer);
+	}
 
 	close(client_fd);
 	close(l_fd);

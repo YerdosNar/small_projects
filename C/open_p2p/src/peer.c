@@ -68,6 +68,31 @@ int connect_to_server(const char *ip, uint16_t port) {
 	return fd;
 }
 
+static int handle_prompt(encrypted_channel *ch, int fd) {
+	uint8_t buf[1024];
+	uint8_t tag;
+
+	int n = crypto_channel_recv(ch, fd, buf, sizeof(buf) - 1, &tag);
+	if (n < 0) return -1;
+	buf[n] = '\0';
+
+	// Displaying the prompt
+	printf("%s", (char*)buf);
+	fflush(stdout);
+
+	char input[256];
+	if (fgets(input, sizeof(input), stdin) == NULL) return -1;
+
+	ssize_t len = strlen(input);
+	if (len > 0 && input[len - 1] == '\n') input[--len] = '\0';
+
+	if (crypto_channel_send(ch, fd,
+				(const uint8_t *)input, len, 0) < 0)
+		return -1;
+
+	return 0;
+}
+
 int main(int argc, char **argv) {
 	if (crypto_init()) exit(EXIT_FAILURE);
 
@@ -121,17 +146,7 @@ int main(int argc, char **argv) {
 	sodium_memzero(rx, sizeof(rx));
 	sodium_memzero(tx, sizeof(tx));
 
-	uint8_t buf[1024];
-	uint8_t tag;
-	int n = crypto_channel_recv(&ch, fd, buf, sizeof(buf) - 1, &tag);
-	if (n < 0) goto fail;
-	buf[n] = '\0';
-	printf("Peer: received '%s' (tag=%u)\n", buf, tag);
-
-	const char *reply = "hello from peer";
-	if (crypto_channel_send(&ch, fd,
-				(const uint8_t *)reply, strlen(reply), 0) < 0) goto fail;
-	printf("Peer: sent '%s'\n", reply);
+	if (handle_prompt(&ch, fd) < 0) goto fail;
 
 	close(fd);
 	return 0;
