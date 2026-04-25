@@ -1,4 +1,9 @@
 #!/usr/bin/env bash
 
-gcc -o exe_ren src/rendezvous.c src/netio.c src/crypto.c -lsodium -Wall -Wextra -lsodium
+if [[ ! -f exe_ren || src/rendezvous.c -nt exe_ren ]]; then
+	if ! gcc -o exe_ren src/rendezvous.c src/netio.c src/crypto.c -lsodium -Wall -Wextra -lsodium; then
+		exit 1
+	fi
+fi
+
 ./exe_ren

@@ -7,12 +7,65 @@
 #include <unistd.h>
 #include <sodium.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include "../include/netio.h"
 #include "../include/crypto.h"
 
 #define PORT 8888
 #define BACKLOG 8
+
+typedef struct {
+	int fd;
+	struct sockaddr_in addr;
+	uint8_t pk[PUBKB];
+	encrypted_channel ch;
+} peer_conn_t;
+
+typedef struct {
+	char id[65];
+	char pw[65];
+	int fd;
+	uint8_t pk[PUBKB];
+	struct sockaddr_in addr;
+	encrypted_channel ch;
+	bool occupied;
+} room_t;
+
+static int accept_and_handshake(int l_fd, peer_conn_t *peer) {
+	socklen_t addr_len = sizeof(peer->addr);
+	char ip[INET_ADDRSTRLEN];
+
+	peer->fd = accept(l_fd, (struct sockaddr*)&peer->addr, &addr_len);
+	if (peer->fd < 0) {
+		perror("accept");
+		return -1;
+	}
+
+	inet_ntop(AF_INET, &peer->addr.sin_addr, ip, sizeof(ip));
+	printf("Rendezvous: accepted connection from %s:%d (fd=%d)\n",
+			ip, ntohs(peer->addr.sin_port), peer->fd);
+
+	uint8_t spk[PUBKB], ssk[SECKB];
+	if (crypto_keygen(spk, ssk)) return -1;
+
+	if (write_all(peer->fd, spk, PUBKB) < 0) {
+		perror("write_all(spk)"); return -1;
+	}
+	if (read_all(peer->fd, peer->pk, PUBKB) < 0) {
+		perror("read-all(peer->pk)"); return -1;
+	}
+
+	uint8_t rx[SESKB], tx[SESKB];
+	if (crypto_derivekeys(rx, tx, spk, ssk, peer->pk)) return -1;
+	sodium_memzero(ssk, sizeof(ssk));
+
+	if (crypto_channel_init(&peer->ch, peer->fd, tx, rx) < 0) return -1;
+	sodium_memzero(rx, sizeof(rx));
+	sodium_memzero(tx, sizeof(tx));
+
+	return 0;
+}
 
 int setup_listen_fd(uint16_t port) {
 	int l_fd;
@@ -57,84 +110,118 @@ int main(void) {
 	uint16_t port = PORT;
 	int l_fd = setup_listen_fd(port);
 	if (listen(l_fd, BACKLOG) < 0) {
-		perror("listen");
-		close(l_fd);
-		exit(EXIT_FAILURE);
+		perror("listen"); close(l_fd); exit(EXIT_FAILURE);
 	}
-
 	printf("Rendezvous: listening on port: %d\n", port);
 
-	struct sockaddr_in ca = {0};
-	socklen_t client_len = sizeof(ca);
-	char client_ip[INET_ADDRSTRLEN];
+	room_t room = {0};
 
-	int client_fd = accept(l_fd, (struct sockaddr *)&ca, &client_len);
-	if (client_fd < 0) {
-		perror("accept");
-		close(l_fd);
-		exit(EXIT_FAILURE);
+	// ---- Wait for first peer ----
+	peer_conn_t p1;
+	if (accept_and_handshake(l_fd, &p1) < 0) {
+		close(l_fd); exit(EXIT_FAILURE);
 	}
-	if (inet_ntop(AF_INET, &ca.sin_addr, client_ip, sizeof(client_ip)) == NULL) {
-		perror("inet_ntop");
-	} else {
-		printf("Rendezvous: accepted connection from %s:%d (fd=%d)\n",
-				client_ip, ntohs(ca.sin_port), client_fd);
-	}
-
-	uint8_t spk[PUBKB];
-	uint8_t ssk[SECKB];
-	uint8_t cpk[PUBKB];
-	if (crypto_keygen(spk, ssk)) {
-		fprintf(stderr, "ERROR: main()->crypto_keygen() failed.\n");
-		close(l_fd);
-		exit(EXIT_FAILURE);
-	}
-
-	if (write_all(client_fd, spk, sizeof(spk)) < 0) {
-		perror("write_all(spk)");
-		goto fail;
-	}
-
-	if (read_all(client_fd, cpk, sizeof(cpk)) < 0) {
-		perror("read_all(cpk)");
-		goto fail;
-	}
-
-	uint8_t rx[SESKB];
-	uint8_t tx[SESKB];
-
-	if (crypto_derivekeys(rx, tx, spk, ssk, cpk)) {
-		fprintf(stderr, "ERROR: crypto_kx_server_session_keys failed (bad peer pk)\n");
-		goto fail;
-	}
-	sodium_memzero(ssk, sizeof(ssk));
-
-	encrypted_channel ch;
-	if (crypto_channel_init(&ch, client_fd, tx, rx) < 0) goto fail;
-
-	sodium_memzero(rx, sizeof(rx));
-	sodium_memzero(tx, sizeof(tx));
 
 	char answer[256];
-	int n = send_prompt(&ch, client_fd,
-			"Are you [H]ost or [J]oin? [h/j]: ",
-			answer, sizeof(answer));
-	if (n < 0) goto fail;
+	if (send_prompt(&p1.ch, p1.fd,
+				"Are you [H]ost or [J]oin? [h/j]: ",
+				answer, sizeof(answer)) < 0)
+		goto fail_p1;
 
-	if (answer[0] == 'h' || answer[0] == 'H') {
-		printf("Rendezvous: peer chose HOST\n");
-	} else if (answer[0] == 'j' || answer[0] == 'J') {
-		printf("Rendezvous: peer chose JOIN\n");
-	} else {
-		printf("Rendezvous: invalid choice '%s'\n", answer);
+	if (answer[0] != 'h' && answer[0] != 'H') {
+		// First peer must be host (no rooms exist yet)
+		crypto_channel_send(&p1.ch, p1.fd,
+				(const uint8_t *)"No rooms available. Goodbye.\n",
+				strlen("No rooms available. Goodbye.\n"), 0);
+		goto fail_p1;
 	}
 
-	close(client_fd);
+	// Host provides room ID and password
+	if (send_prompt(&p1.ch, p1.fd,
+				"Enter Room ID: ",
+				room.id, sizeof(room.id)) < 0)
+		goto fail_p1;
+
+	if (send_prompt(&p1.ch, p1.fd,
+				"Enter Room PW: ",
+				room.pw, sizeof(room.pw)) < 0)
+		goto fail_p1;
+
+	room.fd = p1.fd;
+	room.ch = p1.ch;
+	room.addr = p1.addr;
+	memcpy(room.pk, p1.pk, PUBKB);
+	room.occupied = true;
+
+	printf("Rendezvous: room created [id=%s]\n", room.id);
+
+	// Notify host that we're waiting
+	const char *wait_msg = "Room created. Waiting for peer to join...\n";
+	crypto_channel_send(&room.ch, room.fd,
+			(const uint8_t *)wait_msg, strlen(wait_msg), 0);
+
+	// ---- Wait for second peer ----
+	peer_conn_t p2;
+	if (accept_and_handshake(l_fd, &p2) < 0) {
+		goto fail_room;
+	}
+
+	if (send_prompt(&p2.ch, p2.fd,
+				"Are you [H]ost or [J]oin? [h/j]: ",
+				answer, sizeof(answer)) < 0)
+		goto fail_p2;
+
+	if (answer[0] != 'j' && answer[0] != 'J') {
+		crypto_channel_send(&p2.ch, p2.fd,
+				(const uint8_t *)"Only join is available. Goodbye.\n",
+				strlen("Only join is available. Goodbye.\n"), 0);
+		goto fail_p2;
+	}
+
+	// Joiner provides room ID and password
+	char join_id[65], join_pw[65];
+	if (send_prompt(&p2.ch, p2.fd,
+				"Enter Room ID: ",
+				join_id, sizeof(join_id)) < 0)
+		goto fail_p2;
+
+	if (send_prompt(&p2.ch, p2.fd,
+				"Enter Room PW: ",
+				join_pw, sizeof(join_pw)) < 0)
+		goto fail_p2;
+
+	// Check credentials
+	if (strcmp(join_id, room.id) != 0 || strcmp(join_pw, room.pw) != 0) {
+		printf("Rendezvous: join failed (wrong id/pw)\n");
+		crypto_channel_send(&p2.ch, p2.fd,
+				(const uint8_t *)"Invalid Room ID or Password. Goodbye.\n",
+				strlen("Invalid Room ID or Password. Goodbye.\n"), 0);
+		goto fail_p2;
+	}
+
+	printf("Rendezvous: peer joined room [id=%s] — match!\n", room.id);
+
+	// Notify both peers
+	const char *ok_msg = "Peer found! Connection established.\n";
+	crypto_channel_send(&room.ch, room.fd,
+			(const uint8_t *)ok_msg, strlen(ok_msg), 0);
+	crypto_channel_send(&p2.ch, p2.fd,
+			(const uint8_t *)ok_msg, strlen(ok_msg), 0);
+
+	// Clean up room
+	sodium_memzero(&room, sizeof(room));
+
+	close(p2.fd);
+	close(p1.fd);
 	close(l_fd);
 	return 0;
 
-fail:
-	close(client_fd);
+fail_p2:
+	close(p2.fd);
+fail_room:
+	sodium_memzero(&room, sizeof(room));
+fail_p1:
+	close(p2.fd);
 	close(l_fd);
 	exit(EXIT_FAILURE);
 }
